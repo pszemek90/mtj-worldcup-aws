@@ -1,10 +1,14 @@
 package com.myorg;
 
 import software.amazon.awscdk.*;
+import software.amazon.awscdk.services.dynamodb.*;
+import software.amazon.awscdk.services.events.CronOptions;
+import software.amazon.awscdk.services.events.Rule;
+import software.amazon.awscdk.services.events.Schedule;
+import software.amazon.awscdk.services.events.targets.LambdaFunction;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.FunctionProps;
-import software.amazon.awscdk.services.lambda.Runtime;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.constructs.Construct;
@@ -13,8 +17,6 @@ import java.util.List;
 
 import static software.amazon.awscdk.BundlingOutput.ARCHIVED;
 import static software.amazon.awscdk.services.lambda.Runtime.JAVA_17;
-// import software.amazon.awscdk.Duration;
-// import software.amazon.awscdk.services.sqs.Queue;
 
 public class InfrastructureStack extends Stack {
     public InfrastructureStack(final Construct scope, final String id) {
@@ -58,5 +60,32 @@ public class InfrastructureStack extends Stack {
                 .timeout(Duration.seconds(30))
                 .logRetention(RetentionDays.ONE_WEEK)
                 .build());
+
+        TableV2 matchesTable = TableV2.Builder.create(this, "matches")
+                .partitionKey(Attribute.builder()
+                        .name("match_id")
+                        .type(AttributeType.STRING)
+                        .build())
+                .billing(Billing.provisioned(ThroughputProps.builder()
+                        .readCapacity(Capacity.fixed(1))
+                        .writeCapacity(Capacity.autoscaled(
+                                AutoscaledCapacityOptions.builder()
+                                        .maxCapacity(1)
+                                        .build()
+                        ))
+                        .build()))
+                .build();
+
+        getMatchesFromApi.addEnvironment("MATCHES_TABLE_NAME", matchesTable.getTableName());
+
+        Rule getMatchesFromApiRule = Rule.Builder.create(this, "getMatchesCron")
+                .schedule(Schedule.cron(CronOptions.builder()
+                        .weekDay("SUNDAY")
+                        .hour("6")
+                        .minute("0")
+                        .build()))
+                .targets(List.of(LambdaFunction.Builder.create(getMatchesFromApi).build()))
+                .build();
+
     }
 }
