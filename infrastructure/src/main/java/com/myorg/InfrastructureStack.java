@@ -31,8 +31,8 @@ public class InfrastructureStack extends Stack {
                 "/bin/sh",
                 "-c",
                 """
-                cd getMatchesFromApi && mvn clean install \
-                && cp /asset-input/getMatchesFromApi/target/getMatchesFromApi.jar /asset-output/
+                cd getMatchesFromApi && mvn clean package -Pcdk \
+                && cp /asset-input/getMatchesFromApi/target-cdk/getMatchesFromApi.jar /asset-output/
                 """
         );
 
