@@ -65,7 +65,7 @@ public class InfrastructureStack extends Stack {
         TableV2 matchesTable = TableV2.Builder.create(this, "matches")
                 .partitionKey(Attribute.builder()
                         .name("match_id")
-                        .type(AttributeType.STRING)
+                        .type(AttributeType.NUMBER)
                         .build())
                 .billing(Billing.provisioned(ThroughputProps.builder()
                         .readCapacity(Capacity.fixed(1))
@@ -76,6 +76,8 @@ public class InfrastructureStack extends Stack {
                         ))
                         .build()))
                 .build();
+
+        matchesTable.grantReadWriteData(getMatchesFromApi);
 
         getMatchesFromApi.addEnvironment("MATCHES_TABLE_NAME", matchesTable.getTableName());
         getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
