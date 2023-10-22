@@ -53,6 +53,14 @@ public class MatchDto {
         public void setTimestamp(Long timestamp) {
             this.timestamp = timestamp;
         }
+
+        @Override
+        public String toString() {
+            return "Fixture{" +
+                    "id=" + id +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -87,6 +95,21 @@ public class MatchDto {
             public void setName(String name) {
                 this.name = name;
             }
+
+            @Override
+            public String toString() {
+                return "Team{" +
+                        "name='" + name + '\'' +
+                        '}';
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Teams{" +
+                    "home=" + home +
+                    ", away=" + away +
+                    '}';
         }
     }
 
@@ -110,5 +133,22 @@ public class MatchDto {
         public void setAway(Integer away) {
             this.away = away;
         }
+
+        @Override
+        public String toString() {
+            return "Goals{" +
+                    "home=" + home +
+                    ", away=" + away +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "MatchDto{" +
+                "fixture=" + fixture +
+                ", teams=" + teams +
+                ", goals=" + goals +
+                '}';
     }
 }

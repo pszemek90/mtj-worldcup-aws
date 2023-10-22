@@ -7,8 +7,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 import java.time.LocalDateTime;
 
 @DynamoDbBean
-public class Matches {
-    private String matchId;
+public class Match {
+    private Long matchId;
     private LocalDateTime startTime;
     private String homeTeam;
     private String awayTeam;
@@ -17,14 +17,15 @@ public class Matches {
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("match_id")
-    public String getMatchId() {
+    public Long getMatchId() {
         return matchId;
     }
 
-    public void setMatchId(String matchId) {
+    public void setMatchId(Long matchId) {
         this.matchId = matchId;
     }
 
+    @DynamoDbAttribute("start_time")
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -33,6 +34,7 @@ public class Matches {
         this.startTime = startTime;
     }
 
+    @DynamoDbAttribute("home_team")
     public String getHomeTeam() {
         return homeTeam;
     }
@@ -41,6 +43,7 @@ public class Matches {
         this.homeTeam = homeTeam;
     }
 
+    @DynamoDbAttribute("away_team")
     public String getAwayTeam() {
         return awayTeam;
     }
@@ -49,6 +52,7 @@ public class Matches {
         this.awayTeam = awayTeam;
     }
 
+    @DynamoDbAttribute("home_score")
     public Integer getHomeScore() {
         return homeScore;
     }
@@ -57,11 +61,24 @@ public class Matches {
         this.homeScore = homeScore;
     }
 
+    @DynamoDbAttribute("away_score")
     public Integer getAwayScore() {
         return awayScore;
     }
 
     public void setAwayScore(Integer awayScore) {
         this.awayScore = awayScore;
+    }
+
+    @Override
+    public String toString() {
+        return "Match{" +
+                "matchId=" + matchId +
+                ", startTime=" + startTime +
+                ", homeTeam='" + homeTeam + '\'' +
+                ", awayTeam='" + awayTeam + '\'' +
+                ", homeScore=" + homeScore +
+                ", awayScore=" + awayScore +
+                '}';
     }
 }
