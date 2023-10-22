@@ -12,6 +12,8 @@
         <cdk.version>2.101.1</cdk.version>
         <constructs.version>[10.0.0,11.0.0)</constructs.version>
         <junit.version>5.7.1</junit.version>
+        <aws-java-sdk-dynamodb.version>1.12.552</aws-java-sdk-dynamodb.version>
+        <dynamodb.version>2.20.68</dynamodb.version>
     </properties>
 
     <build>
@@ -59,19 +61,19 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
-            <version>1.12.552</version>
+            <version>${aws-java-sdk-dynamodb.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb</artifactId>
-            <version>2.20.68</version>
+            <version>${dynamodb.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
-            <version>2.20.68</version>
+            <version>${dynamodb.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

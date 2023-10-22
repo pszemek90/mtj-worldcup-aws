@@ -8,6 +8,7 @@ import com.mtjworldcup.mapper.MatchMapper;
 import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
 import com.mtjworldcup.service.MatchApiService;
+import okhttp3.OkHttpClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -20,6 +21,10 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import java.util.List;
 
 public class MatchHandler implements RequestHandler<Object, String> {
+
+    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39&season=2023"; //todo think what to do with a season, maybe get rid of it?
+
+
     private DynamoDbClient ddb;
     private DynamoDbEnhancedClient enhancedClient;
     public MatchHandler() {
@@ -36,8 +41,8 @@ public class MatchHandler implements RequestHandler<Object, String> {
         LambdaLogger logger = context.getLogger();
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-        MatchApiService matchService = new MatchApiService();
-        List<MatchDto> matchesFromApi = matchService.getMatchesFromApi(logger);
+        MatchApiService matchService = new MatchApiService(logger, new OkHttpClient());
+        List<MatchDto> matchesFromApi = matchService.getMatchesFromApi(BASE_API_URL);
         logger.log("Matches from api: " + matchesFromApi, LogLevel.INFO);
         List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
         logger.log("Entities for persist: " + entitiesToPersist, LogLevel.INFO);

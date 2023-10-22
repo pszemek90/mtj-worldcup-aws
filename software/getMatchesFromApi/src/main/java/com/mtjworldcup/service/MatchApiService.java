@@ -15,27 +15,34 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 public class MatchApiService {
 
     private static final String RAPID_API_HOST = "api-football-v1.p.rapidapi.com";
-    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39&season=2023"; //todo think what to do with a season, maybe get rid of it?
-    private static final String RAPID_API_KEY = System.getenv("RAPID_API_KEY");
 
-    public List<MatchDto> getMatchesFromApi(LambdaLogger logger) {
-        OkHttpClient client = new OkHttpClient();
+    private final LambdaLogger logger;
+    private final OkHttpClient okHttpClient;
+
+    public MatchApiService(LambdaLogger logger, OkHttpClient okHttpClient) {
+        this.logger = logger;
+        this.okHttpClient = okHttpClient;
+    }
+
+    public List<MatchDto> getMatchesFromApi(String baseUrl) {
+        final String rapidApiKey = getEnvironmentVariable("RAPID_API_KEY");
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String from = now.format(formatter);
         String to = now.plusDays(7).format(formatter);
         Request request = new Request.Builder()
-                .url(String.format("%s&from=%s&to=%s", BASE_API_URL, from, to))
+                .url(String.format("%s&from=%s&to=%s", baseUrl, from, to))
                 .get()
-                .addHeader("X-RapidAPI-Key", RAPID_API_KEY)
+                .addHeader("X-RapidAPI-Key", rapidApiKey)
                 .addHeader("X-RapidAPI-Host", RAPID_API_HOST)
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
+        try (Response response = okHttpClient.newCall(request).execute()) {
             ResponseBody responseBody = response.body();
 
             if (responseBody != null) {
@@ -49,5 +56,13 @@ public class MatchApiService {
             logger.log(String.format("Exception thrown by http call. Exception: %s. Cause: %s", ex, ex.getCause()));
             throw new RuntimeException("IO Exception thrown by getMatchesFromApi method");
         }
+    }
+
+    String getEnvironmentVariable(String variableName) {
+        Optional<String> optionalEnv = Optional.ofNullable(System.getenv(variableName));
+        if(optionalEnv.isEmpty()) {
+            throw new NoSuchElementException(String.format("No %s environment variable present!", variableName));
+        }
+        return optionalEnv.get();
     }
 }
