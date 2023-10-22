@@ -11,6 +11,7 @@ import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.FunctionProps;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
+import software.amazon.awscdk.services.ssm.StringParameter;
 import software.constructs.Construct;
 
 import java.util.List;
@@ -77,6 +78,7 @@ public class InfrastructureStack extends Stack {
                 .build();
 
         getMatchesFromApi.addEnvironment("MATCHES_TABLE_NAME", matchesTable.getTableName());
+        getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
 
         Rule getMatchesFromApiRule = Rule.Builder.create(this, "getMatchesCron")
                 .schedule(Schedule.cron(CronOptions.builder()
