@@ -51,7 +51,12 @@ public class MatchHandler implements RequestHandler<Object, String> {
                 .writeBatches(writeBatches)
                 .build();
         BatchWriteResult batchWriteResult = enhancedClient.batchWriteItem(batchRequest);
-        logger.log("Unprocessed entities: " + batchWriteResult.unprocessedPutItemsForTable(matches), LogLevel.INFO);
-        return "hello world";
+        List<Match> unprocessedEntities = batchWriteResult.unprocessedPutItemsForTable(matches);
+        if(!unprocessedEntities.isEmpty()) {
+            logger.log("Unprocessed entities: " + unprocessedEntities, LogLevel.WARN);
+            return "Matches batch written with errors";
+        } else {
+            return "Matches batch written successfully";
+        }
     }
 }
