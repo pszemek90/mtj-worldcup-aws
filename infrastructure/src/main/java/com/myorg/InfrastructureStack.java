@@ -72,9 +72,25 @@ public class InfrastructureStack extends Stack {
                         .writeCapacity(Capacity.autoscaled(
                                 AutoscaledCapacityOptions.builder()
                                         .maxCapacity(1)
-                                        .build()
-                        ))
+                                        .build()))
                         .build()))
+                .globalSecondaryIndexes(List.of(
+                        GlobalSecondaryIndexPropsV2.builder()
+                                .readCapacity(Capacity.fixed(1))
+                                .writeCapacity(Capacity.autoscaled(
+                                        AutoscaledCapacityOptions.builder()
+                                                .maxCapacity(1)
+                                                .build()))
+                                .indexName("start_time")
+                                .nonKeyAttributes(List.of(
+                                        "home_team",
+                                        "away_team"))
+                                .partitionKey(Attribute.builder()
+                                        .name("start_time")
+                                        .type(AttributeType.STRING)
+                                        .build())
+                                .projectionType(ProjectionType.INCLUDE)
+                                .build()))
                 .build();
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
