@@ -9,6 +9,7 @@ import software.amazon.awscdk.services.events.targets.LambdaFunction;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.FunctionProps;
+import software.amazon.awscdk.services.lambda.LayerVersion;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.s3.assets.AssetOptions;
 import software.amazon.awscdk.services.ssm.StringParameter;
@@ -48,6 +49,11 @@ public class InfrastructureStack extends Stack {
                 .user("root")
                 .outputType(ARCHIVED);
 
+        LayerVersion dynamoDbLayer = LayerVersion.Builder.create(this, "dynamo-db-layer")
+                .code(Code.fromAsset("../software/dynamo-db-layer/target/dynamo-db-layer-assembly.jar"))
+                .compatibleRuntimes(List.of(JAVA_17))
+                .build();
+
         Function getMatchesFromApi = new Function(this, "getMatchesFromApi", FunctionProps.builder()
                 .runtime(JAVA_17)
                 .code(Code.fromAsset("../software/",
@@ -60,6 +66,7 @@ public class InfrastructureStack extends Stack {
                 .memorySize(1024)
                 .timeout(Duration.seconds(30))
                 .logRetention(RetentionDays.ONE_WEEK)
+                .layers(List.of(dynamoDbLayer))
                 .build());
 
         TableV2 matchesTable = TableV2.Builder.create(this, "matches")
