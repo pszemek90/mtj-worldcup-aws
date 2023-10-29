@@ -1,7 +1,7 @@
 package com.mtjworldcup.mapper;
 
-import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.model.Match;
 
 import java.time.Instant;
 import java.time.ZoneId;

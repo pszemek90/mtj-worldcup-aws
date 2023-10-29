@@ -9,6 +9,8 @@ import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
 import com.mtjworldcup.service.MatchApiService;
 import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -23,6 +25,7 @@ import java.util.List;
 public class MatchHandler implements RequestHandler<Object, String> {
 
     private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39&season=2023"; //todo think what to do with a season, maybe get rid of it?
+    private static final Logger log = LoggerFactory.getLogger(MatchHandler.class);
 
 
     private DynamoDbClient ddb;
@@ -38,14 +41,14 @@ public class MatchHandler implements RequestHandler<Object, String> {
 
     @Override
     public String handleRequest(Object input, Context context) {
-        LambdaLogger logger = context.getLogger();
+        log.info("Fetching matches from api.");
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-        MatchApiService matchService = new MatchApiService(logger, new OkHttpClient());
+        MatchApiService matchService = new MatchApiService(new OkHttpClient());
         List<MatchDto> matchesFromApi = matchService.getMatchesFromApi(BASE_API_URL);
-        logger.log("Matches from api: " + matchesFromApi, LogLevel.INFO);
+        log.info("Matches from api: {}", matchesFromApi);
         List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
-        logger.log("Entities for persist: " + entitiesToPersist, LogLevel.INFO);
+        log.info("Entities for persist: {}", entitiesToPersist);
         List<WriteBatch> writeBatches = entitiesToPersist.stream()
                 .map(entity -> WriteBatch.builder(Match.class)
                         .mappedTableResource(matches)
@@ -58,7 +61,7 @@ public class MatchHandler implements RequestHandler<Object, String> {
         BatchWriteResult batchWriteResult = enhancedClient.batchWriteItem(batchRequest);
         List<Match> unprocessedEntities = batchWriteResult.unprocessedPutItemsForTable(matches);
         if(!unprocessedEntities.isEmpty()) {
-            logger.log("Unprocessed entities: " + unprocessedEntities, LogLevel.WARN);
+            log.warn("Unprocessed entities: {}", unprocessedEntities);
             return "Matches batch written with errors";
         } else {
             return "Matches batch written successfully";

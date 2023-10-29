@@ -19,24 +19,12 @@ import static org.mockito.Mockito.*;
 class MatchApiServiceTest {
 
     private static MockWebServer mockWebServer;
-    private static LambdaLogger logger;
     private static OkHttpClient okHttpClient;
     private static ObjectMapper objectMapper;
     private static String baseUrl;
 
     @BeforeAll
     static void setupOnce() throws Exception{
-        logger = new LambdaLogger() {
-            @Override
-            public void log(String message) {
-                System.out.println(message);
-            }
-
-            @Override
-            public void log(byte[] message) {
-                //no op
-            }
-        };
         okHttpClient = new OkHttpClient();
         objectMapper = new ObjectMapper();
         mockWebServer = new MockWebServer();
@@ -55,7 +43,7 @@ class MatchApiServiceTest {
                 .setResponseCode(200)
                 .setBody(matchesAsString);
         mockWebServer.enqueue(mockResponse);
-        MatchApiService matchApiService = new MatchApiService(logger, okHttpClient);
+        MatchApiService matchApiService = new MatchApiService(okHttpClient);
         MatchApiService matchApiServiceSpy = spy(matchApiService);
         doReturn("TEST").when(matchApiServiceSpy).getEnvironmentVariable("RAPID_API_KEY");
         //when
@@ -68,7 +56,7 @@ class MatchApiServiceTest {
     @Test
     void shouldThrowNoSuchElementException_WhenNoRapidApiKeyVariablePresent() {
         //given
-        MatchApiService matchApiService = new MatchApiService(logger, okHttpClient);
+        MatchApiService matchApiService = new MatchApiService(okHttpClient);
         //when, then
         assertThrows(NoSuchElementException.class, () -> matchApiService.getMatchesFromApi(baseUrl));
     }

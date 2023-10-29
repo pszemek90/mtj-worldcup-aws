@@ -9,6 +9,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -19,13 +21,12 @@ import java.util.Optional;
 
 public class MatchApiService {
 
+    private static final Logger log = LoggerFactory.getLogger(MatchApiService.class);
     private static final String RAPID_API_HOST = "api-football-v1.p.rapidapi.com";
 
-    private final LambdaLogger logger;
     private final OkHttpClient okHttpClient;
 
-    public MatchApiService(LambdaLogger logger, OkHttpClient okHttpClient) {
-        this.logger = logger;
+    public MatchApiService(OkHttpClient okHttpClient) {
         this.okHttpClient = okHttpClient;
     }
 
@@ -47,17 +48,22 @@ public class MatchApiService {
 
             if (responseBody != null) {
                 String jsonString = responseBody.string();
-                logger.log("response body: \n" + jsonString, LogLevel.INFO);
+                log.info("Response body: {}", jsonString);
                 ObjectMapper objectMapper = new ObjectMapper();
                 MatchApiResponse matchApiResponse = objectMapper.readValue(jsonString, MatchApiResponse.class);
                 return matchApiResponse.getResponse();
             } else throw new NoSuchElementException("No body from Api call!");
         } catch (IOException ex) {
-            logger.log(String.format("Exception thrown by http call. Exception: %s. Cause: %s", ex, ex.getCause()));
+            log.error("Exception thrown by http call. Exception: {}. Cause: {}", ex, ex.getCause());
             throw new RuntimeException("IO Exception thrown by getMatchesFromApi method");
         }
     }
 
+    /**
+     * Helper method for easier test mocking.
+     * @param variableName
+     * @return
+     */
     String getEnvironmentVariable(String variableName) {
         Optional<String> optionalEnv = Optional.ofNullable(System.getenv(variableName));
         if(optionalEnv.isEmpty()) {
