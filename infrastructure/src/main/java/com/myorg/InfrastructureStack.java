@@ -44,13 +44,17 @@ public class InfrastructureStack extends Stack {
                         DockerVolume.builder()
                                 .hostPath(System.getProperty("user.home") + "/.m2/")
                                 .containerPath("/root/.m2/")
-                                .build()
-                ))
+                                .build()))
                 .user("root")
                 .outputType(ARCHIVED);
 
         LayerVersion dynamoDbLayer = LayerVersion.Builder.create(this, "dynamo-db-layer")
                 .code(Code.fromAsset("../software/dynamo-db-layer/target/dynamo-db-layer-assembly.jar"))
+                .compatibleRuntimes(List.of(JAVA_17))
+                .build();
+
+        LayerVersion worldcupCommonLayer = LayerVersion.Builder.create(this, "worldcup-common-layer")
+                .code(Code.fromAsset("../software/worldcup-common-layer/target/worldcup-common-layer-assembly.jar"))
                 .compatibleRuntimes(List.of(JAVA_17))
                 .build();
 
@@ -66,7 +70,7 @@ public class InfrastructureStack extends Stack {
                 .memorySize(1024)
                 .timeout(Duration.seconds(30))
                 .logRetention(RetentionDays.ONE_WEEK)
-                .layers(List.of(dynamoDbLayer))
+                .layers(List.of(dynamoDbLayer, worldcupCommonLayer))
                 .build());
 
         TableV2 matchesTable = TableV2.Builder.create(this, "matches")
