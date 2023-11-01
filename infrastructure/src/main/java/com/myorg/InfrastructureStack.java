@@ -37,6 +37,15 @@ public class InfrastructureStack extends Stack {
                 """
         );
 
+        List<String> getMatchesByDatePackagingInstructions = List.of(
+                "/bin/sh",
+                "-c",
+                """
+                cd getMatchesByDate && mvn clean package -Pcdk \
+                && cp /asset-input/getMatchesByDate/target-cdk/getMatchesByDate.jar /asset-output/
+                """
+        );
+
         BundlingOptions.Builder builderOptions = BundlingOptions.builder()
                 .command(getMatchesFromApiPackagingInstructions)
                 .image(JAVA_17.getBundlingImage())
@@ -73,6 +82,21 @@ public class InfrastructureStack extends Stack {
                 .layers(List.of(dynamoDbLayer, worldcupCommonLayer))
                 .build());
 
+        Function getMatchesByDate = new Function(this, "getMatchesByDate", FunctionProps.builder()
+                .runtime(JAVA_17)
+                .code(Code.fromAsset("../software/",
+                        AssetOptions.builder()
+                                .bundling(builderOptions
+                                        .command(getMatchesByDatePackagingInstructions)
+                                        .build())
+                                .build()))
+                .handler("com.mtjworldcup.Handler")
+                .memorySize(1024)
+                .timeout(Duration.seconds(30))
+                .logRetention(RetentionDays.ONE_WEEK)
+                .layers(List.of(dynamoDbLayer, worldcupCommonLayer))
+                .build());
+
         TableV2 matchesTable = TableV2.Builder.create(this, "matches")
                 .partitionKey(Attribute.builder()
                         .name("match_id")
@@ -85,28 +109,13 @@ public class InfrastructureStack extends Stack {
                                         .maxCapacity(1)
                                         .build()))
                         .build()))
-                .globalSecondaryIndexes(List.of(
-                        GlobalSecondaryIndexPropsV2.builder()
-                                .readCapacity(Capacity.fixed(1))
-                                .writeCapacity(Capacity.autoscaled(
-                                        AutoscaledCapacityOptions.builder()
-                                                .maxCapacity(1)
-                                                .build()))
-                                .indexName("start_time")
-                                .nonKeyAttributes(List.of(
-                                        "home_team",
-                                        "away_team"))
-                                .partitionKey(Attribute.builder()
-                                        .name("start_time")
-                                        .type(AttributeType.STRING)
-                                        .build())
-                                .projectionType(ProjectionType.INCLUDE)
-                                .build()))
                 .build();
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
+        matchesTable.grantReadData(getMatchesByDate);
 
         getMatchesFromApi.addEnvironment("MATCHES_TABLE_NAME", matchesTable.getTableName());
+        getMatchesByDate.addEnvironment("MATCHES_TABLE_NAME", matchesTable.getTableName());
         getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
 
         Rule getMatchesFromApiRule = Rule.Builder.create(this, "getMatchesCron")
