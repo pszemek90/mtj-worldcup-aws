@@ -3,6 +3,7 @@ package com.mtjworldcup;
 import com.mtjworldcup.dao.MatchesDao;
 import com.mtjworldcup.model.MatchDto;
 import com.mtjworldcup.model.Matches;
+import com.mtjworldcup.model.Request;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -28,8 +29,9 @@ class HandlerTest {
         matchesFromDate.add(new MatchDto(123L, LocalDateTime.of(LocalDate.of(2023, OCTOBER, 28), LocalTime.of(15, 0)), "dummyHomeTeam", "dummyAwayTeam"));
         when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
         Handler handler = new Handler(mockDao);
+        Request request = new Request(LocalDate.of(2023, OCTOBER, 28));
         //when
-        Matches actualMatches = handler.handleRequest(LocalDate.of(2023, OCTOBER, 28), null);
+        Matches actualMatches = handler.handleRequest(request, null);
         //then
         assertEquals(1, actualMatches.getMatches().size());
     }
@@ -43,8 +45,9 @@ class HandlerTest {
         matchesFromDate.add(new MatchDto(124L, LocalDateTime.of(LocalDate.of(2023, OCTOBER, 28), LocalTime.of(15, 0)), "dummyHomeTeam", "dummyAwayTeam"));
         when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
         Handler handler = new Handler(mockDao);
+        Request request = new Request(LocalDate.of(2023, OCTOBER, 28));
         //when
-        Matches actualMatches = handler.handleRequest(LocalDate.of(2023, OCTOBER, 28), null);
+        Matches actualMatches = handler.handleRequest(request, null);
         //then
         assertEquals(2, actualMatches.getMatches().size());
     }
