@@ -31,10 +31,21 @@
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
         <slf4j-api.version>2.0.9</slf4j-api.version>
+        <localstack.version>1.19.1</localstack.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${localstack.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>localstack</artifactId>
+                <version>${localstack.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
