@@ -1,9 +1,7 @@
 package com.mtjworldcup;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import com.mtjworldcup.mapper.MatchMapper;
 import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
@@ -28,8 +26,9 @@ public class MatchHandler implements RequestHandler<Object, String> {
     private static final Logger log = LoggerFactory.getLogger(MatchHandler.class);
 
 
-    private DynamoDbClient ddb;
-    private DynamoDbEnhancedClient enhancedClient;
+    private final DynamoDbClient ddb;
+    private final DynamoDbEnhancedClient enhancedClient;
+
     public MatchHandler() {
         ddb = DynamoDbClient.builder()
                 .region(Region.EU_CENTRAL_1)

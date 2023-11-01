@@ -5,6 +5,7 @@ import com.mtjworldcup.model.MatchDto;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.localstack.LocalStackContainer;
@@ -21,6 +22,9 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,13 +39,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(SystemStubsExtension.class)
 class MatchesDaoTest {
+
+    private final DynamoDbClient mockDynamoDbClient = mock(DynamoDbClient.class);
+    private final DynamoDbEnhancedClient mockEnhancedClient = mock(DynamoDbEnhancedClient.class);
+    @SystemStub
+    private EnvironmentVariables environmentVariables;
 
     @Test
     void shouldReturnOneMatch_WhenOneMatchInDb() {
         //given
-        DynamoDbClient mockDynamoDbClient = mock(DynamoDbClient.class);
-        DynamoDbEnhancedClient mockEnhancedClient = mock(DynamoDbEnhancedClient.class);
+        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(1);
@@ -56,8 +65,7 @@ class MatchesDaoTest {
     @Test
     void shouldReturnTwoMatches_WhenTwoMatchesInDb() {
         //given
-        DynamoDbClient mockDynamoDbClient = mock(DynamoDbClient.class);
-        DynamoDbEnhancedClient mockEnhancedClient = mock(DynamoDbEnhancedClient.class);
+        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(2);
@@ -85,10 +93,13 @@ class MatchesDaoTest {
     }
 }
 
+@ExtendWith(SystemStubsExtension.class)
 @Testcontainers
 class MatchDaoIntegrationTest{
 
     private static final Logger log = LoggerFactory.getLogger(MatchesDaoTest.class);
+    @SystemStub
+    private EnvironmentVariables environmentVariables;
 
     @Container
     private static final LocalStackContainer localStack =
@@ -157,6 +168,7 @@ class MatchDaoIntegrationTest{
     @Test
     void shouldReturnOneMatch_WhenOneDateIsMatching() {
         //given
+        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         Match match = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 11, 11));
         matches.putItem(match);
         Match matchFromDifferentDate = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 30, 11, 11));
@@ -172,6 +184,7 @@ class MatchDaoIntegrationTest{
     @Test
     void shouldReturnTwoMatches_WhenTwoMatchTheDate() {
         //given
+        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         Match match = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 11, 11));
         matches.putItem(match);
         Match matchWithSameDate = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 12, 12));

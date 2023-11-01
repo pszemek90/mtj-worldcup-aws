@@ -1,6 +1,5 @@
 package com.mtjworldcup.service;
 
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.model.MatchApiResponse;
 import com.mtjworldcup.model.MatchDto;
@@ -9,14 +8,20 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
+@ExtendWith(SystemStubsExtension.class)
 class MatchApiServiceTest {
+
+    @SystemStub
+    private EnvironmentVariables environmentVariables;
 
     private static MockWebServer mockWebServer;
     private static OkHttpClient okHttpClient;
@@ -35,6 +40,7 @@ class MatchApiServiceTest {
     @Test
     void shouldReturnValidDtos_WhenCallWasSuccessful() throws Exception{
         //given
+        environmentVariables.set("RAPID_API_KEY", "TEST");
         List<MatchDto> matches = List.of(new MatchDto());
         MatchApiResponse matchApiResponse = new MatchApiResponse();
         matchApiResponse.setResponse(matches);
@@ -44,10 +50,8 @@ class MatchApiServiceTest {
                 .setBody(matchesAsString);
         mockWebServer.enqueue(mockResponse);
         MatchApiService matchApiService = new MatchApiService(okHttpClient);
-        MatchApiService matchApiServiceSpy = spy(matchApiService);
-        doReturn("TEST").when(matchApiServiceSpy).getEnvironmentVariable("RAPID_API_KEY");
         //when
-        List<MatchDto> actualMatchesFromApi = matchApiServiceSpy.getMatchesFromApi(baseUrl);
+        List<MatchDto> actualMatchesFromApi = matchApiService.getMatchesFromApi(baseUrl);
         //then
         int expectedMatchesFromApiSize = 1;
         assertEquals(expectedMatchesFromApiSize, actualMatchesFromApi.size());
@@ -58,6 +62,6 @@ class MatchApiServiceTest {
         //given
         MatchApiService matchApiService = new MatchApiService(okHttpClient);
         //when, then
-        assertThrows(NoSuchElementException.class, () -> matchApiService.getMatchesFromApi(baseUrl));
+        assertThrows(NullPointerException.class, () -> matchApiService.getMatchesFromApi(baseUrl));
     }
 }

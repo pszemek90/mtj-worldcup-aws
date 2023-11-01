@@ -1,7 +1,5 @@
 package com.mtjworldcup.service;
 
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.model.MatchApiResponse;
 import com.mtjworldcup.model.MatchDto;
@@ -31,7 +29,7 @@ public class MatchApiService {
     }
 
     public List<MatchDto> getMatchesFromApi(String baseUrl) {
-        final String rapidApiKey = getEnvironmentVariable("RAPID_API_KEY");
+        final String rapidApiKey = System.getenv("RAPID_API_KEY");
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String from = now.format(formatter);
@@ -57,18 +55,5 @@ public class MatchApiService {
             log.error("Exception thrown by http call. Exception: {}. Cause: {}", ex, ex.getCause());
             throw new RuntimeException("IO Exception thrown by getMatchesFromApi method");
         }
-    }
-
-    /**
-     * Helper method for easier test mocking.
-     * @param variableName
-     * @return
-     */
-    String getEnvironmentVariable(String variableName) {
-        Optional<String> optionalEnv = Optional.ofNullable(System.getenv(variableName));
-        if(optionalEnv.isEmpty()) {
-            throw new NoSuchElementException(String.format("No %s environment variable present!", variableName));
-        }
-        return optionalEnv.get();
     }
 }

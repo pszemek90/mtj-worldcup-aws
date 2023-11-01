@@ -41,7 +41,8 @@ public class MatchesDao {
     }
 
     public List<MatchDto> getMatchesFromDatabase(LocalDate matchDay) {
-        DynamoDbTable<Match> matches = enhancedClient.table("matches", TableSchema.fromBean(Match.class));
+        String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
+        DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
         String startOfDay = matchDay.atStartOfDay().toString();
         String endOfDay = matchDay.atTime(23, 59, 59).toString();
         Stream<Match> matchesFromDb = getItemsFromDb(matches, startOfDay, endOfDay);
