@@ -1,6 +1,7 @@
 package com.myorg;
 
 import software.amazon.awscdk.*;
+import software.amazon.awscdk.services.apigateway.*;
 import software.amazon.awscdk.services.dynamodb.*;
 import software.amazon.awscdk.services.events.CronOptions;
 import software.amazon.awscdk.services.events.Rule;
@@ -126,6 +127,20 @@ public class InfrastructureStack extends Stack {
                         .build()))
                 .targets(List.of(LambdaFunction.Builder.create(getMatchesFromApi).build()))
                 .build();
+
+        RestApi api = RestApi.Builder.create(this, "worldcup-api")
+                .defaultMethodOptions(MethodOptions.builder()
+                        .methodResponses(List.of(MethodResponse.builder()
+                                .statusCode("200")
+                                .build()))
+                        .build())
+                .build();
+        api.getRoot()
+                .addResource("matches")
+                .addMethod("POST", LambdaIntegration.Builder.create(getMatchesByDate)
+                .integrationResponses(List.of(IntegrationResponse.builder().statusCode("200").build()))
+                .proxy(false)
+                .build());
 
     }
 }
