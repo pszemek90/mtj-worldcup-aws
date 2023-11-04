@@ -33,6 +33,8 @@
         <slf4j-api.version>2.0.9</slf4j-api.version>
         <localstack.version>1.19.1</localstack.version>
         <system-stubs-jupiter.version>2.1.3</system-stubs-jupiter.version>
+        <aws-lambda-java-events.version>3.11.3</aws-lambda-java-events.version>
+        <jackson.version>2.15.3</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -58,9 +60,24 @@
                 <version>${okhttp.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-lambda-java-core</artifactId>
                 <version>${aws.lambda.java.core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-lambda-java-events</artifactId>
+                <version>${aws-lambda-java-events.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.amazonaws</groupId>
