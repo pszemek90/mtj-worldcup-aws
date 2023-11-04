@@ -17,6 +17,7 @@ import software.amazon.awscdk.services.ssm.StringParameter;
 import software.constructs.Construct;
 
 import java.util.List;
+import java.util.Map;
 
 import static software.amazon.awscdk.BundlingOutput.ARCHIVED;
 import static software.amazon.awscdk.services.lambda.Runtime.JAVA_17;
@@ -129,18 +130,18 @@ public class InfrastructureStack extends Stack {
                 .build();
 
         RestApi api = RestApi.Builder.create(this, "worldcup-api")
-                .defaultMethodOptions(MethodOptions.builder()
-                        .methodResponses(List.of(MethodResponse.builder()
-                                .statusCode("200")
-                                .build()))
+                .deployOptions(StageOptions.builder()
+                        .throttlingBurstLimit(1)
+                        .throttlingRateLimit(1)
                         .build())
                 .build();
         api.getRoot()
                 .addResource("matches")
-                .addMethod("POST", LambdaIntegration.Builder.create(getMatchesByDate)
-                .integrationResponses(List.of(IntegrationResponse.builder().statusCode("200").build()))
-                .proxy(false)
-                .build());
-
+                .addResource("{date}")
+                .addMethod("GET", LambdaIntegration.Builder.create(getMatchesByDate)
+                        .build(),
+                        MethodOptions.builder()
+                                .requestParameters(Map.of("method.request.path.date", true))
+                                .build());
     }
 }
