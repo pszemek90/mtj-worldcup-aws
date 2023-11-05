@@ -2,6 +2,7 @@ package com.myorg;
 
 import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.apigateway.*;
+import software.amazon.awscdk.services.cognito.UserPool;
 import software.amazon.awscdk.services.dynamodb.*;
 import software.amazon.awscdk.services.events.CronOptions;
 import software.amazon.awscdk.services.events.Rule;
@@ -133,6 +134,13 @@ public class InfrastructureStack extends Stack {
                 .deployOptions(StageOptions.builder()
                         .throttlingBurstLimit(1)
                         .throttlingRateLimit(1)
+                        .build())
+                .defaultCorsPreflightOptions(CorsOptions.builder().allowOrigins(List.of("http://localhost:5173")).build())
+                .defaultMethodOptions(MethodOptions.builder()
+                        .authorizationType(AuthorizationType.COGNITO)
+                        .authorizer(CognitoUserPoolsAuthorizer.Builder.create(this, "worldcup-user-pool-authorizer")
+                                .cognitoUserPools(List.of(UserPool.fromUserPoolArn(this, "worldcup-user-pool", "arn:aws:cognito-idp:eu-central-1:249702782898:userpool/eu-central-1_U9UvnfwVh")))
+                                .build())
                         .build())
                 .build();
         api.getRoot()
