@@ -12,6 +12,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
@@ -27,9 +28,8 @@ public class MatchesDao {
     private final DynamoDbEnhancedClient enhancedClient;
 
     public MatchesDao() {
-        this.dynamoClient = DynamoDbClient.builder()
-                .region(EU_CENTRAL_1)
-                .build();
+        boolean isLocal = System.getenv("AWS_SAM_LOCAL") != null;
+        this.dynamoClient = prepareClient(isLocal);
         this.enhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoClient)
                 .build();
@@ -42,6 +42,7 @@ public class MatchesDao {
 
     public List<MatchDto> getMatchesFromDatabase(LocalDate matchDay) {
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
+        log.info("Matches table name: {}", matchesTableName);
         DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
         String startOfDay = matchDay.atStartOfDay().toString();
         String endOfDay = matchDay.atTime(23, 59, 59).toString();
@@ -62,5 +63,17 @@ public class MatchesDao {
                         .build())
                 .items()
                 .stream();
+    }
+
+    private DynamoDbClient prepareClient(boolean isLocal) {
+        if(isLocal) {
+            return DynamoDbClient.builder()
+                    .region(EU_CENTRAL_1)
+                    .endpointOverride(URI.create("http://local-ddb:8000"))
+                    .build();
+        }
+        return DynamoDbClient.builder()
+                .region(EU_CENTRAL_1)
+                .build();
     }
 }
