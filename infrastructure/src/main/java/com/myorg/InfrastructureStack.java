@@ -135,6 +135,7 @@ public class InfrastructureStack extends Stack {
                         .throttlingBurstLimit(1)
                         .throttlingRateLimit(1)
                         .build())
+                .cloudWatchRole(true)
                 .defaultCorsPreflightOptions(CorsOptions.builder().allowOrigins(List.of("http://localhost:5173")).build())
                 .defaultMethodOptions(MethodOptions.builder()
                         .authorizationType(AuthorizationType.COGNITO)
@@ -144,6 +145,7 @@ public class InfrastructureStack extends Stack {
                         .build())
                 .build();
         api.getRoot()
+                .addResource("api")
                 .addResource("matches")
                 .addResource("{date}")
                 .addMethod("GET", LambdaIntegration.Builder.create(getMatchesByDate)
