@@ -134,6 +134,7 @@ public class InfrastructureStack extends Stack {
                 .deployOptions(StageOptions.builder()
                         .throttlingBurstLimit(1)
                         .throttlingRateLimit(1)
+                        .loggingLevel(MethodLoggingLevel.ERROR)
                         .build())
                 .cloudWatchRole(true)
                 .defaultCorsPreflightOptions(CorsOptions.builder().allowOrigins(List.of("http://localhost:5173")).build())
