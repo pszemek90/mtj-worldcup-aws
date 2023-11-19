@@ -46,3 +46,5 @@ target
 .cdk.staging
 cdk.out
 
+/clean_cdk_out.sh
+/generate-jwt.sh
