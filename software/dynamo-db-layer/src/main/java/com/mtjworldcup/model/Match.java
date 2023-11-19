@@ -1,36 +1,59 @@
 package com.mtjworldcup.model;
 
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @DynamoDbBean
 public class Match {
-    private Long matchId;
-    private LocalDateTime startTime;
+    private String primaryId;
+    private String secondaryId;
+    private LocalDate date;
+    private LocalTime startTime;
     private String homeTeam;
     private String awayTeam;
     private Integer homeScore;
     private Integer awayScore;
 
+    @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
-    @DynamoDbAttribute("match_id")
-    public Long getMatchId() {
-        return matchId;
+    @DynamoDbAttribute("primary_id")
+    public String getPrimaryId() {
+        return primaryId;
     }
 
-    public void setMatchId(Long matchId) {
-        this.matchId = matchId;
+    public void setPrimaryId(String primaryId) {
+        this.primaryId = primaryId;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = {"getBySecondaryId"})
+    @DynamoDbAttribute("secondary_id")
+    @DynamoDbSortKey
+    public String getSecondaryId() {
+        return secondaryId;
+    }
+
+    public void setSecondaryId(String secondaryId) {
+        this.secondaryId = secondaryId;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = {"getByDate"})
+    @DynamoDbAttribute("date")
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     @DynamoDbAttribute("start_time")
-    public LocalDateTime getStartTime() {
+    public LocalTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(LocalDateTime startTime) {
+    public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
     }
 
@@ -73,7 +96,9 @@ public class Match {
     @Override
     public String toString() {
         return "Match{" +
-                "matchId=" + matchId +
+                "primaryId='" + primaryId + '\'' +
+                ", secondaryId='" + secondaryId + '\'' +
+                ", date=" + date +
                 ", startTime=" + startTime +
                 ", homeTeam='" + homeTeam + '\'' +
                 ", awayTeam='" + awayTeam + '\'' +
