@@ -38,7 +38,7 @@ class HandlerTest {
         //given
         MatchesDao mockDao = mock(MatchesDao.class);
         List<MatchDto> matchesFromDate = new ArrayList<>();
-        matchesFromDate.add(new MatchDto(123L, LocalDateTime.of(LocalDate.of(2023, OCTOBER, 28), LocalTime.of(15, 0)), "dummyHomeTeam", "dummyAwayTeam"));
+        matchesFromDate.add(new MatchDto("match-" + 123, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
         when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
         Handler handler = new Handler(mockDao);
         var request = new APIGatewayProxyRequestEvent().withPathParameters(Map.of("date", "2023-10-28"));
@@ -54,8 +54,8 @@ class HandlerTest {
         //given
         MatchesDao mockDao = mock(MatchesDao.class);
         List<MatchDto> matchesFromDate = new ArrayList<>();
-        matchesFromDate.add(new MatchDto(123L, LocalDateTime.of(LocalDate.of(2023, OCTOBER, 28), LocalTime.of(15, 0)), "dummyHomeTeam", "dummyAwayTeam"));
-        matchesFromDate.add(new MatchDto(124L, LocalDateTime.of(LocalDate.of(2023, OCTOBER, 28), LocalTime.of(15, 0)), "dummyHomeTeam", "dummyAwayTeam"));
+        matchesFromDate.add(new MatchDto("match-" + 123, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
+        matchesFromDate.add(new MatchDto("match-" + 124, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
         when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
         Handler handler = new Handler(mockDao);
         var request = new APIGatewayProxyRequestEvent().withPathParameters(Map.of("date", "2023-10-28"));

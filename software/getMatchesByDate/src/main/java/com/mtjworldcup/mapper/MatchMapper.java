@@ -5,6 +5,6 @@ import com.mtjworldcup.model.MatchDto;
 
 public class MatchMapper {
     public static MatchDto mapToDto(Match entity) {
-        return new MatchDto(entity.getMatchId(), entity.getStartTime(), entity.getHomeTeam(), entity.getAwayTeam());
+        return new MatchDto(entity.getPrimaryId(), entity.getStartTime(), entity.getHomeTeam(), entity.getAwayTeam());
     }
 }

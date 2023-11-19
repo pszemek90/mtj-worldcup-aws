@@ -20,6 +20,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
+import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
@@ -28,6 +29,7 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -55,7 +57,7 @@ class MatchesDaoTest {
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(1);
         MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any(), any());
+        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any());
         //when
         List<MatchDto> matchesFromDatabase = matchesDaoSpy.getMatchesFromDatabase(matchDate);
         //then
@@ -70,7 +72,7 @@ class MatchesDaoTest {
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(2);
         MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any(), any());
+        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any());
         //when
         List<MatchDto> matchesFromDatabase = matchesDaoSpy.getMatchesFromDatabase(matchDate);
         //then
@@ -83,8 +85,8 @@ class MatchesDaoTest {
             Match match = new Match();
             match.setAwayScore(i % 4);
             match.setHomeScore(i % 2);
-            match.setMatchId((long) i);
-            match.setStartTime(LocalDateTime.of(2023, OCTOBER, 29, i % 23, i % 59));
+            match.setPrimaryId("match-" + i);
+            match.setStartTime(LocalTime.of( i % 23, i % 59));
             match.setAwayTeam("team" + (i + 1));
             match.setHomeTeam("team" + (i + 2));
             matches.add(match);
@@ -137,7 +139,15 @@ class MatchDaoIntegrationTest{
             log.info("Matches table does not exist");
         }
         log.info("Creating table");
-        matches.createTable();
+        matches.createTable(builder -> builder
+                .globalSecondaryIndices(
+                        gsi -> gsi.indexName("getBySecondaryId")
+                                .provisionedThroughput(throughput -> throughput.readCapacityUnits(1L).writeCapacityUnits(1L))
+                                .projection(projection -> projection.projectionType(ProjectionType.ALL)),
+                        gsi -> gsi.indexName("getByDate")
+                                .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
+                                .projection(projection -> projection.projectionType(ProjectionType.INCLUDE).nonKeyAttributes("home_team", "away_team")))
+                .build());
         waitForTableCreated();
     }
 
@@ -149,6 +159,7 @@ class MatchDaoIntegrationTest{
             DescribeTableResponse matchesCreated = response.response()
                     .orElseThrow(() -> new NoSuchElementException("Table matches was not created"));
             log.info("Matches table was created. Table name: {}", matchesCreated.table().tableName());
+            log.info("Matches table: {}", matchesCreated.table());
         }
     }
 
@@ -202,10 +213,13 @@ class MatchDaoIntegrationTest{
     private Match prepareMatchWithDate(LocalDateTime date) {
         Random random = new Random();
         Match match = new Match();
+        String id = "match-" + random.nextLong(100);
         match.setAwayScore(1 % 4);
         match.setHomeScore(1 % 2);
-        match.setMatchId(random.nextLong(100));
-        match.setStartTime(date);
+        match.setPrimaryId(id);
+        match.setSecondaryId(id);
+        match.setStartTime(date.toLocalTime());
+        match.setDate(date.toLocalDate());
         match.setAwayTeam("team" + (1 + 1));
         match.setHomeTeam("team" + (1 + 2));
         return match;

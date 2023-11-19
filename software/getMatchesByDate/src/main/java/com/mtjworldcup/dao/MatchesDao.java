@@ -5,15 +5,14 @@ import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Expression;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -44,25 +43,20 @@ public class MatchesDao {
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         log.info("Matches table name: {}", matchesTableName);
         DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-        String startOfDay = matchDay.atStartOfDay().toString();
-        String endOfDay = matchDay.atTime(23, 59, 59).toString();
-        Stream<Match> matchesFromDb = getItemsFromDb(matches, startOfDay, endOfDay);
+        Stream<Match> matchesFromDb = getItemsFromDb(matches, matchDay);
         return matchesFromDb
                 .map(MatchMapper::mapToDto)
                 .toList();
     }
 
-    Stream<Match> getItemsFromDb(DynamoDbTable<Match> table, String startOfDay, String endOfDay) {
-        return table.scan(ScanEnhancedRequest.builder()
-                        .filterExpression(Expression.builder()
-                                .expression("#start_time > :start_day and #start_time < :end_day")
-                                .putExpressionName("#start_time", "start_time")
-                                .putExpressionValue(":start_day", stringValue(startOfDay))
-                                .putExpressionValue(":end_day", stringValue(endOfDay))
-                                .build())
+    Stream<Match> getItemsFromDb(DynamoDbTable<Match> table, LocalDate matchDay) {
+        return table.index("getByDate").query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                .build()))
                         .build())
-                .items()
-                .stream();
+                .stream()
+                .flatMap(page -> page.items().stream());
     }
 
     private DynamoDbClient prepareClient(boolean isLocal) {
