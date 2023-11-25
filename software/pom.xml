@@ -13,6 +13,8 @@
         <module>getMatchesByDate</module>
         <module>getMatchesFromApi</module>
         <module>worldcup-common-layer</module>
+        <module>postTypes</module>
+        <module>cognito-layer</module>
     </modules>
 
     <properties>
@@ -35,6 +37,8 @@
         <system-stubs-jupiter.version>2.1.3</system-stubs-jupiter.version>
         <aws-lambda-java-events.version>3.11.3</aws-lambda-java-events.version>
         <jackson.version>2.15.3</jackson.version>
+        <cognitoidentity.version>2.21.20</cognitoidentity.version>
+        <nimbus-jose-jwt.version>9.37.1</nimbus-jose-jwt.version>
     </properties>
 
     <dependencyManagement>
@@ -68,6 +72,16 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose-jwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>cognitoidentityprovider</artifactId>
+                <version>${cognitoidentity.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.amazonaws</groupId>
