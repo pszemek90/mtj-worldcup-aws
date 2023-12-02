@@ -1,13 +1,13 @@
 package com.mtjworldcup.dao;
 
-import com.mtjworldcup.mapper.MatchMapper;
 import com.mtjworldcup.model.Match;
-import com.mtjworldcup.model.MatchDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URI;
@@ -16,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static software.amazon.awssdk.enhanced.dynamodb.internal.AttributeValues.stringValue;
 import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
 public class MatchesDao {
@@ -34,19 +33,33 @@ public class MatchesDao {
                 .build();
     }
 
-    public MatchesDao(DynamoDbClient dynamoClient,DynamoDbEnhancedClient enhancedClient) {
+    public MatchesDao(DynamoDbClient dynamoClient, DynamoDbEnhancedClient enhancedClient) {
         this.dynamoClient = dynamoClient;
         this.enhancedClient = enhancedClient;
     }
 
-    public List<MatchDto> getMatchesFromDatabase(LocalDate matchDay) {
-        String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
-        log.info("Matches table name: {}", matchesTableName);
-        DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
+    public List<Match> getByDate(LocalDate matchDay) {
+        log.debug("Getting matches for match date: {}", matchDay);
+        var matches = getMatchTable();
         Stream<Match> matchesFromDb = getItemsFromDb(matches, matchDay);
         return matchesFromDb
-                .map(MatchMapper::mapToDto)
                 .toList();
+    }
+
+    public Match getById(String primaryId) {
+        var matches = getMatchTable();
+        return matches.getItem(GetItemEnhancedRequest.builder()
+                        .key(builder -> builder
+                                .partitionValue(primaryId)
+                                .sortValue(primaryId)
+                                .build())
+                .build());
+    }
+
+    private DynamoDbTable<Match> getMatchTable() {
+        String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
+        log.info("Matches table name: {}", matchesTableName);
+        return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
     }
 
     Stream<Match> getItemsFromDb(DynamoDbTable<Match> table, LocalDate matchDay) {
@@ -69,5 +82,21 @@ public class MatchesDao {
         return DynamoDbClient.builder()
                 .region(EU_CENTRAL_1)
                 .build();
+    }
+
+    public BatchWriteResult save(List<Match> filteredEntities) {
+        String userId = filteredEntities.get(0).getSecondaryId();
+        log.debug("Saving {} types for user {}", filteredEntities.size(), userId);
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        List<WriteBatch> writeBatches = filteredEntities.stream()
+                .map(entity -> WriteBatch.builder(Match.class)
+                        .mappedTableResource(matchTable)
+                        .addPutItem(entity)
+                        .build())
+                .toList();
+        BatchWriteItemEnhancedRequest batchRequest = BatchWriteItemEnhancedRequest.builder()
+                .writeBatches(writeBatches)
+                .build();
+        return enhancedClient.batchWriteItem(batchRequest);
     }
 }
