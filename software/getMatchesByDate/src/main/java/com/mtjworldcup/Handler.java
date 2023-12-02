@@ -8,7 +8,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.dao.MatchesDao;
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.mapper.MatchMapper;
+import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.Matches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,10 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         String date = request.getPathParameters().get("date");
         LocalDate parsedDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         log.info("Getting matches for date: {}", parsedDate);
-        List<MatchDto> matchesFromDatabase = matchesDao.getMatchesFromDatabase(parsedDate);
+        List<Match> matchesFromDatabase = matchesDao.getByDate(parsedDate);
         log.debug("Matches fetched from database: {}", matchesFromDatabase);
         Matches matches = new Matches();
-        matches.setMatches(matchesFromDatabase);
+        matches.setMatches(MatchMapper.mapToDto(matchesFromDatabase));
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());

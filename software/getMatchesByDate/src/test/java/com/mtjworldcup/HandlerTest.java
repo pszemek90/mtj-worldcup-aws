@@ -5,19 +5,14 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.dao.MatchesDao;
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.Matches;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -37,9 +32,7 @@ class HandlerTest {
     void shouldReturnOneMatch_WhenOneMatchForADateAvailable() throws Exception {
         //given
         MatchesDao mockDao = mock(MatchesDao.class);
-        List<MatchDto> matchesFromDate = new ArrayList<>();
-        matchesFromDate.add(new MatchDto("match-" + 123, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
-        when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
+        when(mockDao.getByDate(any())).thenReturn(List.of(new Match()));
         Handler handler = new Handler(mockDao);
         var request = new APIGatewayProxyRequestEvent().withPathParameters(Map.of("date", "2023-10-28"));
         //when
@@ -53,10 +46,7 @@ class HandlerTest {
     void shouldReturnTwoMatches_WhenTwoMatchesForADateAvailable() throws Exception{
         //given
         MatchesDao mockDao = mock(MatchesDao.class);
-        List<MatchDto> matchesFromDate = new ArrayList<>();
-        matchesFromDate.add(new MatchDto("match-" + 123, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
-        matchesFromDate.add(new MatchDto("match-" + 124, LocalTime.of(15, 0), "dummyHomeTeam", "dummyAwayTeam"));
-        when(mockDao.getMatchesFromDatabase(any())).thenReturn(matchesFromDate);
+        when(mockDao.getByDate(any())).thenReturn(List.of(new Match(), new Match()));
         Handler handler = new Handler(mockDao);
         var request = new APIGatewayProxyRequestEvent().withPathParameters(Map.of("date", "2023-10-28"));
         //when
