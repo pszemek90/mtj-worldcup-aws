@@ -149,7 +149,7 @@ class MatchDaoIntegrationTest{
                                 .projection(projection -> projection.projectionType(ProjectionType.ALL)),
                         gsi -> gsi.indexName("getByDate")
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
-                                .projection(projection -> projection.projectionType(ProjectionType.INCLUDE).nonKeyAttributes("home_team", "away_team")))
+                                .projection(projection -> projection.projectionType(ProjectionType.INCLUDE).nonKeyAttributes("home_team", "away_team", "start_time")))
                 .build());
         waitForTableCreated();
     }
@@ -192,6 +192,7 @@ class MatchDaoIntegrationTest{
         log.info("Matches fetched from database: {}", matchesFromDatabase.size());
         //then
         assertEquals(1, matchesFromDatabase.size());
+        assertEquals(LocalTime.of(11, 11), matchesFromDatabase.get(0).getStartTime());
     }
 
     @Test
