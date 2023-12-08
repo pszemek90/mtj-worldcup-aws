@@ -51,5 +51,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <finalName>postTypes</finalName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <profile>
+            <id>cdk</id>
+            <build>
+                <directory>target-cdk</directory>
+            </build>
+        </profile>
+    </profiles>
 </project>
