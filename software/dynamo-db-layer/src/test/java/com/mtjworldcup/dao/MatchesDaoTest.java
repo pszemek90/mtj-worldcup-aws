@@ -17,6 +17,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
@@ -58,7 +59,7 @@ class MatchesDaoTest {
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(1);
         MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any());
+        doReturn(matchStream).when(matchesDaoSpy).getByDateIndexFromDb(any(), any());
         //when
         List<Match> matchesFromDatabase = matchesDaoSpy.getByDate(matchDate);
         //then
@@ -73,11 +74,32 @@ class MatchesDaoTest {
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         Stream<Match> matchStream = prepareMatches(2);
         MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getItemsFromDb(any(), any());
+        doReturn(matchStream).when(matchesDaoSpy).getByDateIndexFromDb(any(), any());
         //when
         List<Match> matchesFromDatabase = matchesDaoSpy.getByDate(matchDate);
         //then
         assertEquals(2, matchesFromDatabase.size());
+    }
+
+    // test to check if getCompleteMatches method works properly
+    @Test
+    void shouldReturnCompleteMatches_WhenGetCompleteMatchesCalled() {
+        //given
+        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
+        MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
+
+        Stream<Match> matchStream = prepareMatches(2);
+
+        MatchesDao matchesDaoSpy = spy(matchesDao);
+        doReturn(matchStream).when(matchesDaoSpy).scan(any(), any());
+
+        //when
+        List<Match> finishedMatches = matchesDaoSpy.getFinishedMatches();
+
+        //then
+        assertEquals(2, finishedMatches.size());
+        assertNotNull(finishedMatches.get(0).getAwayTeam());
+        assertNotNull(finishedMatches.get(0).getHomeTeam());
     }
 
     private Stream<Match> prepareMatches(int numberOfMatches) {
@@ -242,6 +264,36 @@ class MatchDaoIntegrationTest{
         List<Match> filteredEntities = List.of(match, match2);
         //when, then
         assertThrows(DynamoDbException.class, () -> matchesDao.save(filteredEntities));
+    }
+
+    @Test
+    void shouldReturnOneMatch_WhenOnlyOneMatchFinished() {
+        Match match = prepareMatchWithId("match-123");
+        matches.putItem(match);
+        Match match1 = prepareMatchWithId("match-124");
+        match1.setAwayScore(null);
+        match1.setHomeScore(null);
+        matches.putItem(match1);
+        //when
+        List<Match> matchesFromDatabase = matchesDao.getFinishedMatches();
+        //then
+        assertEquals(1, matchesFromDatabase.size());
+    }
+
+    @Test
+    void shouldReturnEmptyList_WhenNoMatchesFinished() {
+        Match match = prepareMatchWithId("match-123");
+        match.setHomeScore(null);
+        match.setAwayScore(null);
+        matches.putItem(match);
+        Match match1 = prepareMatchWithId("match-124");
+        match1.setAwayScore(null);
+        match1.setHomeScore(null);
+        matches.putItem(match1);
+        //when
+        List<Match> finishedMatches = matchesDao.getFinishedMatches();
+        //then
+        assertEquals(0, finishedMatches.size());
     }
 
     private Match prepareMatchWithId(String matchId) {

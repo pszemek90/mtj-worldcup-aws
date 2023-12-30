@@ -3,10 +3,7 @@ package com.mtjworldcup.dao;
 import com.mtjworldcup.model.Match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -38,10 +35,29 @@ public class MatchesDao {
         this.enhancedClient = enhancedClient;
     }
 
+    //method returning List<Match> that will return items filtered by existence of awayScore and homeScore attributes
+
+    public List<Match> getFinishedMatches() {
+        DynamoDbTable<Match> matchesTable = getMatchTable();
+        ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder()
+                .filterExpression(Expression.builder()
+                        .expression("attribute_exists(#awayScore) AND attribute_exists(#homeScore)")
+                        .putExpressionName("#awayScore", "away_score")
+                        .putExpressionName("#homeScore", "home_score")
+                        .build())
+                .build();
+        Stream<Match> finishedMatches = scan(matchesTable, scanRequest);
+        return finishedMatches.toList();
+    }
+
+    Stream<Match> scan(DynamoDbTable<Match> table, ScanEnhancedRequest scanRequest) {
+        return table.scan(scanRequest).items().stream();
+    }
+
     public List<Match> getByDate(LocalDate matchDay) {
         log.debug("Getting matches for match date: {}", matchDay);
         var matches = getMatchTable();
-        Stream<Match> matchesFromDb = getItemsFromDb(matches, matchDay);
+        Stream<Match> matchesFromDb = getByDateIndexFromDb(matches, matchDay);
         return matchesFromDb
                 .toList();
     }
@@ -62,7 +78,7 @@ public class MatchesDao {
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
     }
 
-    Stream<Match> getItemsFromDb(DynamoDbTable<Match> table, LocalDate matchDay) {
+    Stream<Match> getByDateIndexFromDb(DynamoDbTable<Match> table, LocalDate matchDay) {
         return table.index("getByDate").query(QueryEnhancedRequest.builder()
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
                                 .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
