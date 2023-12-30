@@ -1,6 +1,7 @@
 package com.mtjworldcup.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtjworldcup.exception.HttpClientException;
 import com.mtjworldcup.model.MatchApiResponse;
 import com.mtjworldcup.model.MatchDto;
 import okhttp3.OkHttpClient;
@@ -15,7 +16,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public class MatchApiService {
 
@@ -32,7 +32,7 @@ public class MatchApiService {
         final String rapidApiKey = System.getenv("RAPID_API_KEY");
         LocalDate now = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String from = now.format(formatter);
+        String from = now.plusDays(1).format(formatter);
         String to = now.plusDays(7).format(formatter);
         Request request = new Request.Builder()
                 .url(String.format("%s&from=%s&to=%s", baseUrl, from, to))
@@ -53,7 +53,7 @@ public class MatchApiService {
             } else throw new NoSuchElementException("No body from Api call!");
         } catch (IOException ex) {
             log.error("Exception thrown by http call. Exception: {}. Cause: {}", ex, ex.getCause());
-            throw new RuntimeException("IO Exception thrown by getMatchesFromApi method");
+            throw new HttpClientException("IO Exception thrown by getMatchesFromApi method");
         }
     }
 }
