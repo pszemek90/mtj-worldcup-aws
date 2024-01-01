@@ -15,6 +15,7 @@
         <module>worldcup-common-layer</module>
         <module>postTypes</module>
         <module>cognito-layer</module>
+        <module>getResults</module>
     </modules>
 
     <properties>
