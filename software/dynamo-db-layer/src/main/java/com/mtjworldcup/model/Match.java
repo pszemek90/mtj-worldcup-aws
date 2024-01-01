@@ -15,6 +15,10 @@ public class Match {
     private String awayTeam;
     private Integer homeScore;
     private Integer awayScore;
+    private Integer correctTypings;
+    private TypingStatus typingStatus;
+    private MatchStatus matchStatus;
+    private RecordType recordType;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -93,6 +97,42 @@ public class Match {
         this.awayScore = awayScore;
     }
 
+    @DynamoDbAttribute("correct_typings")
+    public Integer getCorrectTypings() {
+        return correctTypings;
+    }
+
+    public void setCorrectTypings(Integer correctTypings) {
+        this.correctTypings = correctTypings;
+    }
+
+    @DynamoDbAttribute("typing_status")
+    public TypingStatus getTypingStatus() {
+        return typingStatus;
+    }
+
+    public void setTypingStatus(TypingStatus typingStatus) {
+        this.typingStatus = typingStatus;
+    }
+
+    @DynamoDbAttribute("match_status")
+    public MatchStatus getMatchStatus() {
+        return matchStatus;
+    }
+
+    public void setMatchStatus(MatchStatus matchStatus) {
+        this.matchStatus = matchStatus;
+    }
+
+    @DynamoDbAttribute("record_type")
+    public RecordType getRecordType() {
+        return recordType;
+    }
+
+    public void setRecordType(RecordType recordType) {
+        this.recordType = recordType;
+    }
+
     @Override
     public String toString() {
         return "Match{" +
@@ -104,6 +144,9 @@ public class Match {
                 ", awayTeam='" + awayTeam + '\'' +
                 ", homeScore=" + homeScore +
                 ", awayScore=" + awayScore +
+                ", correctTypings=" + correctTypings +
+                ", typingStatus=" + typingStatus +
+                ", recordType=" + recordType +
                 '}';
     }
 }
