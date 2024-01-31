@@ -1,6 +1,7 @@
 package com.mtjworldcup.dao;
 
 import com.mtjworldcup.model.Match;
+import com.mtjworldcup.model.RecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -35,23 +36,23 @@ public class MatchesDao {
         this.enhancedClient = enhancedClient;
     }
 
-    //method returning List<Match> that will return items filtered by existence of awayScore and homeScore attributes
-
     public List<Match> getFinishedMatches() {
         DynamoDbTable<Match> matchesTable = getMatchTable();
-        ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder()
-                .filterExpression(Expression.builder()
-                        .expression("attribute_exists(#awayScore) AND attribute_exists(#homeScore)")
-                        .putExpressionName("#awayScore", "away_score")
-                        .putExpressionName("#homeScore", "home_score")
+        return matchesTable.index("getByRecordType")
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional
+                                .keyEqualTo(Key.builder()
+                                        .partitionValue(RecordType.MATCH.name())
+                                        .build()))
+                        .filterExpression(Expression.builder()
+                                .expression("attribute_exists(#awayScore) AND attribute_exists(#homeScore)")
+                                .putExpressionName("#awayScore", "away_score")
+                                .putExpressionName("#homeScore", "home_score")
+                                .build())
                         .build())
-                .build();
-        Stream<Match> finishedMatches = scan(matchesTable, scanRequest);
-        return finishedMatches.toList();
-    }
-
-    Stream<Match> scan(DynamoDbTable<Match> table, ScanEnhancedRequest scanRequest) {
-        return table.scan(scanRequest).items().stream();
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .toList();
     }
 
     public List<Match> getByDate(LocalDate matchDay) {

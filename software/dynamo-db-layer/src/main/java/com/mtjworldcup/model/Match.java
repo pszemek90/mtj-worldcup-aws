@@ -125,6 +125,7 @@ public class Match {
     }
 
     @DynamoDbAttribute("record_type")
+    @DynamoDbSecondaryPartitionKey(indexNames = {"getByRecordType"})
     public RecordType getRecordType() {
         return recordType;
     }
