@@ -9,12 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.dao.MatchesDao;
 import com.mtjworldcup.mapper.MatchMapper;
 import com.mtjworldcup.model.Match;
-import com.mtjworldcup.model.Matches;
+import com.mtjworldcup.model.MatchDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -32,11 +34,13 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
-        List<Match> finishedMatches = matchesDao.getFinishedMatches();
+        Map<LocalDate, List<MatchDto>> finishedMatchesGroupedByDate = matchesDao.getFinishedMatches()
+                .stream()
+                .collect(Collectors.groupingBy(Match::getDate, Collectors.mapping(MatchMapper::mapToDto, Collectors.toList())));
+        log.debug("Finished matches returned: {}", finishedMatchesGroupedByDate);
         try{
             ObjectMapper objectMapper = new ObjectMapper();
-            Matches matches = new Matches(MatchMapper.mapToDto(finishedMatches));
-            String body = objectMapper.writeValueAsString(matches);
+            String body = objectMapper.writeValueAsString(finishedMatchesGroupedByDate);
             return new APIGatewayProxyResponseEvent().withBody(body)
                     .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                     .withStatusCode(200);

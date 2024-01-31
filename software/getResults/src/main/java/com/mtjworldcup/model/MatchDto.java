@@ -1,7 +1,4 @@
 package com.mtjworldcup.model;
 
-import java.time.LocalDate;
-
-public record MatchDto(String homeTeam, Integer homeScore, Integer awayScore, String awayTeam,
-                       LocalDate date, Integer correctTypings) {
+public record MatchDto(String homeTeam, String result, String awayTeam, Integer correctTypings) {
 }
