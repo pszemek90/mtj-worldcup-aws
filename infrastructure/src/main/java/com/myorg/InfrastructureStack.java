@@ -34,16 +34,20 @@ public class InfrastructureStack extends Stack {
 
         Function postTypes = Lambda.createLambda(this, "postTypes", dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
 
+        Function getResults = Lambda.createLambda(this, "getResults", dynamoDbLayer, worldcupCommonLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
         matchesTable.grantReadData(getMatchesByDate);
         matchesTable.grantReadWriteData(postTypes);
+        matchesTable.grantReadData(getResults);
 
         String matchesTableName = "MATCHES_TABLE_NAME";
         getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
         getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
         postTypes.addEnvironment(matchesTableName, matchesTable.getTableName());
+        getResults.addEnvironment(matchesTableName, matchesTable.getTableName());
         getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
 
         Rule getMatchesFromApiRule = EventBridgeRule.createRule(this, getMatchesFromApi);
@@ -51,6 +55,10 @@ public class InfrastructureStack extends Stack {
         RestApi api = ApiGateway.createRestApi(this);
         api.getRoot()
                 .addResource("api")
+                .addResource("results")
+                .addMethod("GET", LambdaIntegration.Builder.create(getResults).build())
+                .getResource()
+                .getParentResource()
                 .addResource("matches")
                 .addResource("{date}")
                 .addMethod("GET", LambdaIntegration.Builder.create(getMatchesByDate).build(),
