@@ -20,16 +20,16 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.util.List;
 
-public class MatchHandler implements RequestHandler<Object, String> {
+public class Handler implements RequestHandler<Object, String> {
 
-    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39&season=2023"; //todo think what to do with a season, maybe get rid of it?
-    private static final Logger log = LoggerFactory.getLogger(MatchHandler.class);
+    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39";
+    private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
 
     private final DynamoDbClient ddb;
     private final DynamoDbEnhancedClient enhancedClient;
 
-    public MatchHandler() {
+    public Handler() {
         ddb = DynamoDbClient.builder()
                 .region(Region.EU_CENTRAL_1)
                 .build();
