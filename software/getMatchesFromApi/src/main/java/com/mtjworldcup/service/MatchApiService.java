@@ -34,8 +34,9 @@ public class MatchApiService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String from = now.plusDays(1).format(formatter);
         String to = now.plusDays(7).format(formatter);
+        int season = now.getYear();
         Request request = new Request.Builder()
-                .url(String.format("%s&from=%s&to=%s", baseUrl, from, to))
+                .url(String.format("%s&from=%s&to=%s&season=%d", baseUrl, from, to, season))
                 .get()
                 .addHeader("X-RapidAPI-Key", rapidApiKey)
                 .addHeader("X-RapidAPI-Host", RAPID_API_HOST)
