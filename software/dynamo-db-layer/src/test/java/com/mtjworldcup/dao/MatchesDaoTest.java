@@ -1,6 +1,7 @@
 package com.mtjworldcup.dao;
 
 import com.mtjworldcup.model.Match;
+import com.mtjworldcup.model.RecordType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,84 +45,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SystemStubsExtension.class)
-class MatchesDaoTest {
-
-    private final DynamoDbClient mockDynamoDbClient = mock(DynamoDbClient.class);
-    private final DynamoDbEnhancedClient mockEnhancedClient = mock(DynamoDbEnhancedClient.class);
-    @SystemStub
-    private EnvironmentVariables environmentVariables;
-
-    @Test
-    void shouldReturnOneMatch_WhenOneMatchInDb() {
-        //given
-        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
-        MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
-        LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
-        Stream<Match> matchStream = prepareMatches(1);
-        MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getByDateIndexFromDb(any(), any());
-        //when
-        List<Match> matchesFromDatabase = matchesDaoSpy.getByDate(matchDate);
-        //then
-        assertEquals(1, matchesFromDatabase.size());
-    }
-
-    @Test
-    void shouldReturnTwoMatches_WhenTwoMatchesInDb() {
-        //given
-        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
-        MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
-        LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
-        Stream<Match> matchStream = prepareMatches(2);
-        MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).getByDateIndexFromDb(any(), any());
-        //when
-        List<Match> matchesFromDatabase = matchesDaoSpy.getByDate(matchDate);
-        //then
-        assertEquals(2, matchesFromDatabase.size());
-    }
-
-    // test to check if getCompleteMatches method works properly
-    @Test
-    void shouldReturnCompleteMatches_WhenGetCompleteMatchesCalled() {
-        //given
-        environmentVariables.set("MATCHES_TABLE_NAME", "matches");
-        MatchesDao matchesDao = new MatchesDao(mockDynamoDbClient, mockEnhancedClient);
-
-        Stream<Match> matchStream = prepareMatches(2);
-
-        MatchesDao matchesDaoSpy = spy(matchesDao);
-        doReturn(matchStream).when(matchesDaoSpy).scan(any(), any());
-
-        //when
-        List<Match> finishedMatches = matchesDaoSpy.getFinishedMatches();
-
-        //then
-        assertEquals(2, finishedMatches.size());
-        assertNotNull(finishedMatches.get(0).getAwayTeam());
-        assertNotNull(finishedMatches.get(0).getHomeTeam());
-    }
-
-    private Stream<Match> prepareMatches(int numberOfMatches) {
-        ArrayList<Match> matches = new ArrayList<>();
-        for (int i = 0; i < numberOfMatches; i++) {
-            Match match = new Match();
-            match.setAwayScore(i % 4);
-            match.setHomeScore(i % 2);
-            match.setPrimaryId("match-" + i);
-            match.setSecondaryId("match-" + i);
-            match.setStartTime(LocalTime.of( i % 23, i % 59));
-            match.setAwayTeam("team" + (i + 1));
-            match.setHomeTeam("team" + (i + 2));
-            matches.add(match);
-        }
-        return matches.stream();
-    }
-}
-
-@ExtendWith(SystemStubsExtension.class)
 @Testcontainers
-class MatchDaoIntegrationTest{
+class MatchesDaoTest{
 
     private static final Logger log = LoggerFactory.getLogger(MatchesDaoTest.class);
     @SystemStub
@@ -171,7 +96,14 @@ class MatchDaoIntegrationTest{
                                 .projection(projection -> projection.projectionType(ProjectionType.ALL)),
                         gsi -> gsi.indexName("getByDate")
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
-                                .projection(projection -> projection.projectionType(ProjectionType.INCLUDE).nonKeyAttributes("home_team", "away_team", "start_time")))
+                                .projection(projection -> projection
+                                        .projectionType(ProjectionType.INCLUDE)
+                                        .nonKeyAttributes("home_team", "away_team", "start_time")),
+                        gsi -> gsi.indexName("getByRecordType")
+                                .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
+                                .projection(projection -> projection
+                                        .projectionType(ProjectionType.INCLUDE)
+                                        .nonKeyAttributes("home_team", "away_team", "home_score", "away_score")))
                 .build());
         waitForTableCreated();
     }
@@ -315,6 +247,7 @@ class MatchDaoIntegrationTest{
         match.setDate(date.toLocalDate());
         match.setAwayTeam("team" + (1 + 1));
         match.setHomeTeam("team" + (1 + 2));
+        match.setRecordType(RecordType.MATCH);
         return match;
     }
 }

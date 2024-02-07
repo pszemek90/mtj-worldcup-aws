@@ -12,7 +12,6 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
@@ -58,8 +57,13 @@ public class MatchesDao {
     public List<Match> getByDate(LocalDate matchDay) {
         log.debug("Getting matches for match date: {}", matchDay);
         var matches = getMatchTable();
-        Stream<Match> matchesFromDb = getByDateIndexFromDb(matches, matchDay);
-        return matchesFromDb
+        return matches.index("getByDate").query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                .build()))
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
                 .toList();
     }
 
@@ -77,16 +81,6 @@ public class MatchesDao {
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         log.info("Matches table name: {}", matchesTableName);
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-    }
-
-    Stream<Match> getByDateIndexFromDb(DynamoDbTable<Match> table, LocalDate matchDay) {
-        return table.index("getByDate").query(QueryEnhancedRequest.builder()
-                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
-                                .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                .build()))
-                        .build())
-                .stream()
-                .flatMap(page -> page.items().stream());
     }
 
     private DynamoDbClient prepareClient(boolean isLocal) {
