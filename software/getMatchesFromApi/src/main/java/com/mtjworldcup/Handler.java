@@ -2,6 +2,7 @@ package com.mtjworldcup;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.mapper.MatchMapper;
 import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class Handler implements RequestHandler<Object, String> {
 
-    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=39";
+    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3";
     private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
 
@@ -43,7 +44,7 @@ public class Handler implements RequestHandler<Object, String> {
         log.info("Fetching matches from api.");
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         DynamoDbTable<Match> matches = enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-        MatchApiService matchService = new MatchApiService(new OkHttpClient());
+        MatchApiService matchService = new MatchApiService(new OkHttpClient(), new ObjectMapper());
         List<MatchDto> matchesFromApi = matchService.getMatchesFromApi(BASE_API_URL);
         log.info("Matches from api: {}", matchesFromApi);
         List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
