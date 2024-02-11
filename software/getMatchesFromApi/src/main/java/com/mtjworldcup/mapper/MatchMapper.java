@@ -2,12 +2,18 @@ package com.mtjworldcup.mapper;
 
 import com.mtjworldcup.model.MatchDto;
 import com.mtjworldcup.model.Match;
+import com.mtjworldcup.model.RecordType;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 
 public class MatchMapper {
+
+    private MatchMapper() {
+        // private constructor to hide implicit public one
+    }
+
     public static Match mapToEntity(MatchDto dto) {
         Match match = new Match();
         match.setPrimaryId("match-" + dto.getFixture().getId());
@@ -20,6 +26,7 @@ public class MatchMapper {
         match.setAwayTeam(dto.getTeams().getAway().getName());
         match.setHomeScore(dto.getGoals().getHome());
         match.setAwayScore(dto.getGoals().getAway());
+        match.setRecordType(RecordType.MATCH);
         return match;
     }
 

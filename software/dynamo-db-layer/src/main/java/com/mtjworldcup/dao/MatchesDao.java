@@ -77,7 +77,7 @@ public class MatchesDao {
                 .build());
     }
 
-    private DynamoDbTable<Match> getMatchTable() {
+    public DynamoDbTable<Match> getMatchTable() {
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
         log.info("Matches table name: {}", matchesTableName);
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
