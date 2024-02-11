@@ -9,6 +9,7 @@ import com.mtjworldcup.dao.MatchesDao;
 import com.mtjworldcup.exception.SignatureVerifierException;
 import com.mtjworldcup.model.Match;
 import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.model.RecordType;
 import com.mtjworldcup.service.CognitoJwtVerifierService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 entity.setSecondaryId(secondaryId);
                 entity.setHomeScore(matchType.getHomeScore());
                 entity.setAwayScore(matchType.getAwayScore());
+                entity.setRecordType(RecordType.TYPING);
             }
             if(!filteredEntities.isEmpty()){
                 matchesDao.save(filteredEntities);
