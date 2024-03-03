@@ -96,8 +96,10 @@ public class MatchesDao {
     }
 
     public BatchWriteResult save(List<Match> filteredEntities) {
-        String userId = filteredEntities.get(0).getSecondaryId();
-        log.debug("Saving {} types for user {}", filteredEntities.size(), userId);
+        if(filteredEntities == null) {
+            throw new IllegalStateException("Attempt to save null list of entities");
+        }
+        log.info("Saving {} records to DB", filteredEntities.size());
         DynamoDbTable<Match> matchTable = getMatchTable();
         List<WriteBatch> writeBatches = filteredEntities.stream()
                 .map(entity -> WriteBatch.builder(Match.class)
