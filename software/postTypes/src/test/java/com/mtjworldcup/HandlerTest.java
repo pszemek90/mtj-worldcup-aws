@@ -2,11 +2,11 @@ package com.mtjworldcup;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtjworldcup.dao.MatchesDao;
-import com.mtjworldcup.exception.SignatureVerifierException;
-import com.mtjworldcup.model.Match;
+import com.mtjworldcup.dynamo.dao.MatchesDao;
+import com.mtjworldcup.cognito.exception.SignatureVerifierException;
+import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.model.MatchDto;
-import com.mtjworldcup.service.CognitoJwtVerifierService;
+import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

@@ -5,12 +5,12 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtjworldcup.dao.MatchesDao;
-import com.mtjworldcup.exception.SignatureVerifierException;
-import com.mtjworldcup.model.Match;
+import com.mtjworldcup.dynamo.dao.MatchesDao;
+import com.mtjworldcup.cognito.exception.SignatureVerifierException;
+import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.model.MatchDto;
-import com.mtjworldcup.model.RecordType;
-import com.mtjworldcup.service.CognitoJwtVerifierService;
+import com.mtjworldcup.dynamo.model.RecordType;
+import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
