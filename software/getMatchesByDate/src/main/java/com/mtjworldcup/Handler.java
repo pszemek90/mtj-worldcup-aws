@@ -7,9 +7,9 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.mtjworldcup.dao.MatchesDao;
+import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.mapper.MatchMapper;
-import com.mtjworldcup.model.Match;
+import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.model.Matches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
