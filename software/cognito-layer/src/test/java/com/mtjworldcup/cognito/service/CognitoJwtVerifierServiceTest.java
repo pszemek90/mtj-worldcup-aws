@@ -1,4 +1,4 @@
-package com.mtjworldcup.service;
+package com.mtjworldcup.cognito.service;
 
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
@@ -11,7 +11,8 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -19,7 +20,7 @@ import static org.mockito.Mockito.spy;
 @ExtendWith(SystemStubsExtension.class)
 class CognitoJwtVerifierServiceTest {
 
-    private CognitoJwtVerifierService service = new CognitoJwtVerifierService();
+    private final CognitoJwtVerifierService service = new CognitoJwtVerifierService();
     @SystemStub
     private EnvironmentVariables environmentVariables;
 
