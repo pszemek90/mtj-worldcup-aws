@@ -1,5 +1,6 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.dynamo.model;
 
+import com.mtjworldcup.common.model.TypingStatus;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.LocalDate;

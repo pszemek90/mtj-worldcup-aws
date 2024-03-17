@@ -20,6 +20,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.pszemek</groupId>
+            <artifactId>worldcup-common-layer</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
         </dependency>

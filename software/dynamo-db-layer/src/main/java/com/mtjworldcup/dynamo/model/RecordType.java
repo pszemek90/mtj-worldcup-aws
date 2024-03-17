@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.dynamo.model;
 
 public enum RecordType {
     MATCH, TYPING

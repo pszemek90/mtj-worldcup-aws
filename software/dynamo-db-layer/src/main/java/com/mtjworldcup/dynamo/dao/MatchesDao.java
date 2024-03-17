@@ -1,7 +1,7 @@
-package com.mtjworldcup.dao;
+package com.mtjworldcup.dynamo.dao;
 
-import com.mtjworldcup.model.Match;
-import com.mtjworldcup.model.RecordType;
+import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.dynamo.model.RecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -18,6 +18,10 @@ import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 public class MatchesDao {
 
     private static final Logger log = LoggerFactory.getLogger(MatchesDao.class);
+
+    private static final String GET_BY_SECONDARY_ID_INDEX = "getBySecondaryId";
+    private static final String GET_BY_DATE_INDEX = "getByDate";
+    private static final String GET_BY_RECORD_TYPE_INDEX = "getByRecordType";
 
     private final DynamoDbClient dynamoClient;
     private final DynamoDbEnhancedClient enhancedClient;
@@ -37,7 +41,7 @@ public class MatchesDao {
 
     public List<Match> getFinishedMatches() {
         DynamoDbTable<Match> matchesTable = getMatchTable();
-        return matchesTable.index("getByRecordType")
+        return matchesTable.index(GET_BY_RECORD_TYPE_INDEX)
                 .query(QueryEnhancedRequest.builder()
                         .queryConditional(QueryConditional
                                 .keyEqualTo(Key.builder()
@@ -57,7 +61,7 @@ public class MatchesDao {
     public List<Match> getByDate(LocalDate matchDay) {
         log.debug("Getting matches for match date: {}", matchDay);
         var matches = getMatchTable();
-        return matches.index("getByDate").query(QueryEnhancedRequest.builder()
+        return matches.index(GET_BY_DATE_INDEX).query(QueryEnhancedRequest.builder()
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
                                 .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                 .build()))
@@ -83,18 +87,6 @@ public class MatchesDao {
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
     }
 
-    private DynamoDbClient prepareClient(boolean isLocal) {
-        if(isLocal) {
-            return DynamoDbClient.builder()
-                    .region(EU_CENTRAL_1)
-                    .endpointOverride(URI.create("http://local-ddb:8000"))
-                    .build();
-        }
-        return DynamoDbClient.builder()
-                .region(EU_CENTRAL_1)
-                .build();
-    }
-
     public BatchWriteResult save(List<Match> filteredEntities) {
         if(filteredEntities == null) {
             throw new IllegalStateException("Attempt to save null list of entities");
@@ -111,5 +103,38 @@ public class MatchesDao {
                 .writeBatches(writeBatches)
                 .build();
         return enhancedClient.batchWriteItem(batchRequest);
+    }
+
+    public List<Match> getTypings(String userId) {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.index(GET_BY_SECONDARY_ID_INDEX)
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                        .partitionValue(userId)
+                                .build()))
+                        .attributesToProject(List.of(
+                                "date",
+                                "home_team",
+                                "away_team",
+                                "home_score",
+                                "away_score",
+                                "typing_status"
+                        ))
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .toList();
+    }
+
+    private DynamoDbClient prepareClient(boolean isLocal) {
+        if(isLocal) {
+            return DynamoDbClient.builder()
+                    .region(EU_CENTRAL_1)
+                    .endpointOverride(URI.create("http://local-ddb:8000"))
+                    .build();
+        }
+        return DynamoDbClient.builder()
+                .region(EU_CENTRAL_1)
+                .build();
     }
 }

@@ -1,7 +1,7 @@
-package com.mtjworldcup.dao;
+package com.mtjworldcup.dynamo.dao;
 
-import com.mtjworldcup.model.Match;
-import com.mtjworldcup.model.RecordType;
+import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.dynamo.model.RecordType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
-import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
@@ -33,16 +32,13 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
-import java.util.stream.Stream;
 
 import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(SystemStubsExtension.class)
 @Testcontainers
@@ -226,6 +222,50 @@ class MatchesDaoTest{
         List<Match> finishedMatches = matchesDao.getFinishedMatches();
         //then
         assertEquals(0, finishedMatches.size());
+    }
+
+    @Test
+    void shouldReturnNoTypings_WhenNoTypingsInDb() {
+        //given
+        String userId = "user-123";
+        //when
+        List<Match> typings = matchesDao.getTypings(userId);
+        //then
+        assertEquals(0, typings.size());
+    }
+
+    @Test
+    void shouldReturnOneTyping_WhenOneTypingInDb() {
+        //given
+        String userId = "user-123";
+        Match typing = prepareTyping(userId);
+        matches.putItem(typing);
+        //when
+        List<Match> typings = matchesDao.getTypings(userId);
+        //then
+        assertEquals(1, typings.size());
+    }
+
+    @Test
+    void shouldReturnOneTyping_WhenOneTypingForUserInDb() {
+        //given
+        String userId = "user-123";
+        Match typing = prepareTyping(userId);
+        matches.putItem(typing);
+        String differentUser = "user-124";
+        Match differentTyping = prepareTyping(differentUser);
+        matches.putItem(differentTyping);
+        //when
+        List<Match> typings = matchesDao.getTypings(userId);
+        //then
+        assertEquals(1, typings.size());
+    }
+
+    private Match prepareTyping(String userId) {
+        Match match = new Match();
+        match.setPrimaryId("match-123");
+        match.setSecondaryId(userId);
+        return match;
     }
 
     private Match prepareMatchWithId(String matchId) {
