@@ -1,8 +1,8 @@
 package com.mtjworldcup.mapper;
 
 import com.mtjworldcup.model.MatchDto;
-import com.mtjworldcup.model.Match;
-import com.mtjworldcup.model.RecordType;
+import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.dynamo.model.RecordType;
 
 import java.time.Instant;
 import java.time.ZoneId;
