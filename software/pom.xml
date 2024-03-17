@@ -16,6 +16,7 @@
         <module>postTypes</module>
         <module>cognito-layer</module>
         <module>getResults</module>
+        <module>getMyTypings</module>
     </modules>
 
     <properties>
