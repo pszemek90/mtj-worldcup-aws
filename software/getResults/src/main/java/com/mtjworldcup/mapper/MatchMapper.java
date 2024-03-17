@@ -1,6 +1,6 @@
 package com.mtjworldcup.mapper;
 
-import com.mtjworldcup.model.Match;
+import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.model.MatchDto;
 
 import java.util.List;
