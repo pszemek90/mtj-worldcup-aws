@@ -1,25 +1,28 @@
 package com.mtjworldcup.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchDto {
 
     public MatchDto() {}
 
-    public MatchDto(String primaryId, Integer homeScore, Integer awayScore) {
-        this.primaryId = primaryId;
+    public MatchDto(String matchId, Integer homeScore, Integer awayScore) {
+        this.matchId = matchId;
         this.homeScore = homeScore;
         this.awayScore = awayScore;
     }
 
-    private String primaryId;
+    private String matchId;
     private Integer homeScore;
     private Integer awayScore;
 
-    public String getPrimaryId() {
-        return primaryId;
+    public String getMatchId() {
+        return matchId;
     }
 
-    public void setPrimaryId(String primaryId) {
-        this.primaryId = primaryId;
+    public void setMatchId(String matchId) {
+        this.matchId = matchId;
     }
 
     public Integer getHomeScore() {

@@ -30,6 +30,10 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private final MatchesDao matchesDao;
     private final ObjectMapper objectMapper;
 
+    public Handler() {
+        this(new CognitoJwtVerifierService(), new MatchesDao(), new ObjectMapper());
+    }
+
     public Handler(CognitoJwtVerifierService cognitoJwtVerifierService, MatchesDao matchesDao, ObjectMapper objectMapper){
         this.cognitoJwtVerifierService = cognitoJwtVerifierService;
         this.matchesDao = matchesDao;
@@ -38,18 +42,21 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
-        String bearerToken = input.getHeaders().get("Authorization");
+        String authorizationHeader = input.getHeaders().get("Authorization");
+        String bearerToken = authorizationHeader.substring("Bearer ".length());
         try {
             String secondaryId = cognitoJwtVerifierService.getSubject(bearerToken);
-            MatchDto[] matchDtos = objectMapper.readValue(input.getBody(), MatchDto[].class);
+            String body = input.getBody();
+            log.info("Input body: {}", body);
+            MatchDto[] matchDtos = objectMapper.readValue(body, MatchDto[].class);
             List<Match> filteredEntities = Arrays.stream(matchDtos)
-                    .map(match -> matchesDao.getById(match.getPrimaryId()))
+                    .map(match -> matchesDao.getById(match.getMatchId()))
                     .filter(entity -> checkMatchDate(entity.getDate(), entity.getStartTime()))
                     .toList();
             List<String> filteredIds = filteredEntities.stream().map(Match::getPrimaryId).toList();
             Map<String, MatchDto> typesToSave = Arrays.stream(matchDtos)
-                    .filter(dto -> filteredIds.contains(dto.getPrimaryId()))
-                    .collect(Collectors.toMap(MatchDto::getPrimaryId, Function.identity()));
+                    .filter(dto -> filteredIds.contains(dto.getMatchId()))
+                    .collect(Collectors.toMap(MatchDto::getMatchId, Function.identity()));
             for (Match entity : filteredEntities) {
                 MatchDto matchType = typesToSave.get(entity.getPrimaryId());
                 entity.setSecondaryId(secondaryId);
@@ -63,13 +70,15 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 return new APIGatewayProxyResponseEvent().withStatusCode(204);
             }
         } catch (SignatureVerifierException e) {
-            log.error("Token was not verified! Token: {}", bearerToken);
+            log.error("Token was not verified! Reason: {}, token: {}", e.getMessage(), bearerToken);
             return new APIGatewayProxyResponseEvent().withStatusCode(403);
         } catch (Exception e) {
             log.error("Unexpected exception occurred while getting subject from token. Exception: {}", e.getMessage());
             return new APIGatewayProxyResponseEvent().withStatusCode(404);
         }
-        return new APIGatewayProxyResponseEvent().withStatusCode(201);
+        return new APIGatewayProxyResponseEvent()
+                .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .withStatusCode(201);
     }
 
     private boolean checkMatchDate(LocalDate matchDate, LocalTime matchTime) {

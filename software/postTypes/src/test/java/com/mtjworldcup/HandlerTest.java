@@ -31,11 +31,12 @@ class HandlerTest {
         //given
         when(cognitoJwtVerifierService.getSubject(any())).thenThrow(SignatureVerifierException.class);
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent().withHeaders(
-                Map.of("Authorization", "someToken"));
+                Map.of("Authorization", "Bearer someToken"));
         //when
         var response = handler.handleRequest(input, null);
         //then
         assertEquals(403, response.getStatusCode());
+        verify(cognitoJwtVerifierService).getSubject("someToken");
     }
 
     @Test
@@ -44,7 +45,7 @@ class HandlerTest {
         when(cognitoJwtVerifierService.getSubject(any())).thenReturn("someSubject");
         MatchDto[] types = {new MatchDto("match-123", 1, 1)};
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent()
-                .withHeaders(Map.of("Authorization", "someToken"))
+                .withHeaders(Map.of("Authorization", "Bearer someToken"))
                 .withBody(objectMapper.writeValueAsString(types));
         Match match123 = prepareMatch("match-123");
         when(matchesDao.getById("match-123")).thenReturn(match123);
@@ -61,7 +62,7 @@ class HandlerTest {
         when(cognitoJwtVerifierService.getSubject(any())).thenReturn("someSubject");
         MatchDto[] types = {new MatchDto("match-123", 1, 1)};
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent()
-                .withHeaders(Map.of("Authorization", "someToken"))
+                .withHeaders(Map.of("Authorization", "Bearer someToken"))
                 .withBody(objectMapper.writeValueAsString(types));
         Match match123 = prepareMatch("match-123");
         match123.setDate(LocalDate.now().minusDays(1));
