@@ -47,6 +47,8 @@ public class InfrastructureStack extends Stack {
         getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
         getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
         postTypes.addEnvironment(matchesTableName, matchesTable.getTableName());
+        postTypes.addEnvironment("JWKS_URL", StringParameter.valueForStringParameter(this, "JWKS_URL"));
+        postTypes.addEnvironment("USER_POOL_ID", StringParameter.valueForStringParameter(this, "USER_POOL_ID"));
         getResults.addEnvironment(matchesTableName, matchesTable.getTableName());
         getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
 
