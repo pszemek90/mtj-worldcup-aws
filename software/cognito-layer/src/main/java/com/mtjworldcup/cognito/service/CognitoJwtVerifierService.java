@@ -10,6 +10,9 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminGetUserRequest;
@@ -21,6 +24,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class CognitoJwtVerifierService {
+
+    private static final Logger log = LoggerFactory.getLogger(CognitoJwtVerifierService.class);
 
     public String getSubject(String token) throws SignatureVerifierException {
         try {
@@ -39,10 +44,13 @@ public class CognitoJwtVerifierService {
     }
 
     boolean userExists(String subject) {
+        log.debug("Checking if user exists for subject: {}", subject);
         try(CognitoIdentityProviderClient client = CognitoIdentityProviderClient.builder()
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .region(Region.EU_CENTRAL_1)
                 .build()) {
             String userPoolId = System.getenv("USER_POOL_ID");
+            log.debug("User pool id: {}", userPoolId);
             AdminGetUserRequest request = AdminGetUserRequest.builder()
                     .userPoolId(userPoolId)
                     .username(subject)
@@ -50,6 +58,7 @@ public class CognitoJwtVerifierService {
             client.adminGetUser(request);
             return true;
         } catch (Exception e) {
+            log.warn("User does not exist in user pool. Cause: {}", e.getMessage());
             return false;
         }
     }
