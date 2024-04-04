@@ -2,8 +2,9 @@ package com.mtjworldcup.mapper;
 
 import com.amazonaws.util.CollectionUtils;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.Typings;
+import com.mtjworldcup.model.Typing;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -16,19 +17,20 @@ public class TypingMapper {
         // hide implicit public constructor
     }
 
-    public static Typings mapToDto(List<Match> records) {
-        if(CollectionUtils.isNullOrEmpty(records)){
-            return new Typings(Map.of());
+    public static Map<LocalDate, List<Typing>> mapToDto(List<Match> records) {
+        if (CollectionUtils.isNullOrEmpty(records)) {
+            return Map.of();
         }
-        return new Typings(records.stream()
+        return records.stream()
                 .collect(Collectors.groupingBy(
                         Match::getDate,
                         () -> new TreeMap<>(Comparator.reverseOrder()),
                         Collectors.mapping(TypingMapper::mapToDto, Collectors.toList())
-                )));
+                ));
     }
 
-    private static Typings.Typing mapToDto(Match match) {
-        return new Typings.Typing(match.getHomeTeam() + " - " + match.getAwayTeam(), match.getTypingStatus());
+    private static Typing mapToDto(Match match) {
+        return new Typing(match.getHomeTeam(), match.getHomeScore() + " - " + match.getAwayScore(),
+                match.getAwayTeam(), match.getTypingStatus());
     }
 }

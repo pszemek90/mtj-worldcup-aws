@@ -1,16 +1,15 @@
 package com.mtjworldcup;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.Typings;
+import com.mtjworldcup.model.Typing;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 class HandlerTest {
@@ -50,8 +48,9 @@ class HandlerTest {
         //when
         var response = handler.handleRequest(request, null);
         //then
-        Typings typings = OBJECT_MAPPER.readValue(response.getBody(), Typings.class);
-        assertEquals(0, typings.typings().size());
+        var typings = OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<Map<LocalDate, List<Typing>>>() {
+        });
+        assertEquals(0, typings.size());
         assertEquals(200, response.getStatusCode());
     }
 
@@ -61,13 +60,14 @@ class HandlerTest {
         String token = "Bearer testToken";
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
         String testUserId = "testUserId";
-        when(cognitoJwtVerifierService.getSubject(token)).thenReturn(testUserId);
+        when(cognitoJwtVerifierService.getSubject("testToken")).thenReturn(testUserId);
         when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
         //when
         var response = handler.handleRequest(request, null);
         //then
-        Typings typings = OBJECT_MAPPER.readValue(response.getBody(), Typings.class);
-        assertEquals(1, typings.typings().size());
+        var typings = OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<Map<LocalDate, List<Typing>>>() {
+        });
+        assertEquals(1, typings.size());
         assertEquals(200, response.getStatusCode());
     }
 
@@ -76,7 +76,7 @@ class HandlerTest {
         //given
         String token = "Bearer testToken";
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
-        when(cognitoJwtVerifierService.getSubject(token)).thenThrow(new SignatureVerifierException("No user found for token"));
+        when(cognitoJwtVerifierService.getSubject("testToken")).thenThrow(new SignatureVerifierException("No user found for token"));
         //when
         var response = handler.handleRequest(request, null);
         //then
@@ -93,7 +93,8 @@ class HandlerTest {
         String testUserId = "testUserId";
         when(cognitoJwtVerifierService.getSubject(token)).thenReturn(testUserId);
         when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
-        when(objectMapper.writeValueAsString(any(Typings.class))).thenThrow(new JsonProcessingException("testJsonProcessingException"){});
+        when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("testJsonProcessingException") {
+        });
         //when
         var response = handler.handleRequest(request, null);
         //then
