@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtjworldcup.common.model.TypingStatus;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.dynamo.model.Match;
@@ -63,6 +64,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 entity.setHomeScore(matchType.getHomeScore());
                 entity.setAwayScore(matchType.getAwayScore());
                 entity.setRecordType(RecordType.TYPING);
+                entity.setTypingStatus(TypingStatus.UNKNOWN);
             }
             if(!filteredEntities.isEmpty()){
                 matchesDao.save(filteredEntities);
