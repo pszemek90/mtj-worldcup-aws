@@ -6,7 +6,6 @@ import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigateway.MethodOptions;
 import software.amazon.awscdk.services.apigateway.RestApi;
 import software.amazon.awscdk.services.dynamodb.TableV2;
-import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.LayerVersion;
 import software.amazon.awscdk.services.ssm.StringParameter;
@@ -36,6 +35,8 @@ public class InfrastructureStack extends Stack {
 
         Function getResults = Lambda.createLambda(this, "getResults", dynamoDbLayer, worldcupCommonLayer);
 
+        Function getMyTypings = Lambda.createLambda(this, "getMyTypings", dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -44,21 +45,35 @@ public class InfrastructureStack extends Stack {
         matchesTable.grantReadData(getResults);
 
         String matchesTableName = "MATCHES_TABLE_NAME";
+        String jwksUrl = "JWKS_URL";
+        String userPoolId = "USER_POOL_ID";
+
         getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
-        getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
-        postTypes.addEnvironment(matchesTableName, matchesTable.getTableName());
-        postTypes.addEnvironment("JWKS_URL", StringParameter.valueForStringParameter(this, "JWKS_URL"));
-        postTypes.addEnvironment("USER_POOL_ID", StringParameter.valueForStringParameter(this, "USER_POOL_ID"));
-        getResults.addEnvironment(matchesTableName, matchesTable.getTableName());
         getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
 
-        Rule getMatchesFromApiRule = EventBridgeRule.createRule(this, getMatchesFromApi);
+        getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
+
+        postTypes.addEnvironment(matchesTableName, matchesTable.getTableName());
+        postTypes.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
+        postTypes.addEnvironment(userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
+
+        getResults.addEnvironment(matchesTableName, matchesTable.getTableName());
+
+        getMyTypings.addEnvironment(matchesTableName, matchesTable.getTableName());
+        getMyTypings.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
+        getMyTypings.addEnvironment(userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
+
+        EventBridgeRule.createRule(this, getMatchesFromApi);
 
         RestApi api = ApiGateway.createRestApi(this);
         api.getRoot()
                 .addResource("api")
                 .addResource("results")
                 .addMethod("GET", LambdaIntegration.Builder.create(getResults).build())
+                .getResource()
+                .getParentResource()
+                .addResource("typings")
+                .addMethod("GET", LambdaIntegration.Builder.create(getMyTypings).build())
                 .getResource()
                 .getParentResource()
                 .addResource("matches")
