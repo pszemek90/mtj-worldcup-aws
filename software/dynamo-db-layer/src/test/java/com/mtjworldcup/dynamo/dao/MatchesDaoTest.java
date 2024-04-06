@@ -1,6 +1,7 @@
 package com.mtjworldcup.dynamo.dao;
 
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.dynamo.model.RecordType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,7 +100,7 @@ class MatchesDaoTest{
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
                                 .projection(projection -> projection
                                         .projectionType(ProjectionType.INCLUDE)
-                                        .nonKeyAttributes("home_team", "away_team", "home_score", "away_score")))
+                                        .nonKeyAttributes("home_team", "away_team", "home_score", "away_score", "match_status")))
                 .build());
         waitForTableCreated();
     }
@@ -196,7 +197,7 @@ class MatchesDaoTest{
 
     @Test
     void shouldReturnOneMatch_WhenOnlyOneMatchFinished() {
-        Match match = prepareMatchWithId("match-123");
+        Match match = prepareFinishedMatchWithId("match-123");
         matches.putItem(match);
         Match match1 = prepareMatchWithId("match-124");
         match1.setAwayScore(null);
@@ -268,6 +269,12 @@ class MatchesDaoTest{
         return match;
     }
 
+    private Match prepareFinishedMatchWithId(String matchId) {
+        Match match = prepareMatchWithId(matchId);
+        match.setMatchStatus(MatchStatus.FINISHED);
+        return match;
+    }
+
     private Match prepareMatchWithId(String matchId) {
         Match match = prepareMatchWithDate(LocalDateTime.now());
         match.setPrimaryId(matchId);
@@ -288,6 +295,7 @@ class MatchesDaoTest{
         match.setAwayTeam("team" + (1 + 1));
         match.setHomeTeam("team" + (1 + 2));
         match.setRecordType(RecordType.MATCH);
+        match.setMatchStatus(MatchStatus.SCHEDULED);
         return match;
     }
 }
