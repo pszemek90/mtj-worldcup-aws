@@ -1,8 +1,8 @@
-package com.mtjworldcup.mapper;
+package com.mtjworldcup.getmytypings.mapper;
 
 import com.amazonaws.util.CollectionUtils;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.Typing;
+import com.mtjworldcup.getmytypings.model.Typing;
 
 import java.time.LocalDate;
 import java.util.Comparator;

@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.getmytypings.model;
 
 import com.mtjworldcup.common.model.TypingStatus;
 
