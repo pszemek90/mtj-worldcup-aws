@@ -1,12 +1,14 @@
 package com.mtjworldcup.dynamo.dao;
 
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.dynamo.model.RecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -48,9 +50,11 @@ public class MatchesDao {
                                         .partitionValue(RecordType.MATCH.name())
                                         .build()))
                         .filterExpression(Expression.builder()
-                                .expression("attribute_exists(#awayScore) AND attribute_exists(#homeScore)")
-                                .putExpressionName("#awayScore", "away_score")
-                                .putExpressionName("#homeScore", "home_score")
+                                .expression("#matchStatus = :matchStatus")
+                                .putExpressionName("#matchStatus", "match_status")
+                                .putExpressionValue(":matchStatus", AttributeValue.builder()
+                                        .s(MatchStatus.FINISHED.name())
+                                        .build())
                                 .build())
                         .build())
                 .stream()
@@ -65,6 +69,13 @@ public class MatchesDao {
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
                                 .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                 .build()))
+                        .filterExpression(Expression.builder()
+                                .expression("#recordType = :recordType")
+                                .putExpressionName("#recordType", "record_type")
+                                .putExpressionValue(":recordType", AttributeValue.builder()
+                                        .s(RecordType.MATCH.name())
+                                        .build())
+                                .build())
                         .build())
                 .stream()
                 .flatMap(page -> page.items().stream())
