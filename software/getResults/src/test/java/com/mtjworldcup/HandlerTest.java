@@ -83,6 +83,21 @@ class HandlerTest {
         assertEquals(1, matchDtos.size());
     }
 
+    @Test
+    void shouldReturnEmptyMap_WhenNoMatchesAreFinished() throws Exception {
+        // given
+        MatchesDao mockDao = mock(MatchesDao.class);
+        Handler handler = new Handler(mockDao);
+        when(mockDao.getFinishedMatches()).thenReturn(List.of());
+        var request = new APIGatewayProxyRequestEvent();
+        //when
+        var response = handler.handleRequest(request, null);
+        //then
+        var mapType = new TypeReference<Map<LocalDate, List<MatchDto>>>() {};
+        var matchesMap = objectMapper.readValue(response.getBody(), mapType);
+        assertEquals(0, matchesMap.size());
+    }
+
     private Match prepareMatch() {
         var match = new Match();
         match.setDate(LocalDate.of(2024, 1, 5));
