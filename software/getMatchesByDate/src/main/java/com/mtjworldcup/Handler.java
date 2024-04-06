@@ -40,7 +40,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         LocalDate parsedDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         log.info("Getting matches for date: {}", parsedDate);
         List<Match> matchesFromDatabase = matchesDao.getByDate(parsedDate);
-        log.debug("Matches fetched from database: {}", matchesFromDatabase);
+        log.info("Matches fetched from database: {}", matchesFromDatabase);
         Matches matches = new Matches();
         matches.setMatches(MatchMapper.mapToDto(matchesFromDatabase));
         try {
