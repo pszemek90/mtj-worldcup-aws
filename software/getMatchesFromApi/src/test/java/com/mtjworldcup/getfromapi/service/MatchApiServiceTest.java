@@ -1,7 +1,7 @@
-package com.mtjworldcup.service;
+package com.mtjworldcup.getfromapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtjworldcup.model.*;
+import com.mtjworldcup.getfromapi.model.*;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;

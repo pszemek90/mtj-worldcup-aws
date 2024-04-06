@@ -1,6 +1,6 @@
-package com.mtjworldcup.mapper;
+package com.mtjworldcup.getfromapi.mapper;
 
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.getfromapi.model.MatchDto;
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.RecordType;
 

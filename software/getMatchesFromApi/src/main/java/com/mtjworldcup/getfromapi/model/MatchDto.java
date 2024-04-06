@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.getfromapi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

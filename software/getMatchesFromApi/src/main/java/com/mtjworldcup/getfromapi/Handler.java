@@ -1,13 +1,13 @@
-package com.mtjworldcup;
+package com.mtjworldcup.getfromapi;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
-import com.mtjworldcup.mapper.MatchMapper;
+import com.mtjworldcup.getfromapi.mapper.MatchMapper;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.MatchDto;
-import com.mtjworldcup.service.MatchApiService;
+import com.mtjworldcup.getfromapi.model.MatchDto;
+import com.mtjworldcup.getfromapi.service.MatchApiService;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
