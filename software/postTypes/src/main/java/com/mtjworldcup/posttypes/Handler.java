@@ -1,4 +1,4 @@
-package com.mtjworldcup;
+package com.mtjworldcup.posttypes;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -9,7 +9,7 @@ import com.mtjworldcup.common.model.TypingStatus;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.posttypes.model.MatchDto;
 import com.mtjworldcup.dynamo.model.RecordType;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import org.slf4j.Logger;
