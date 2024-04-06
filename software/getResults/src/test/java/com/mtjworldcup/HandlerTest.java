@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.getresults.Handler;
+import com.mtjworldcup.getresults.model.MatchDto;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

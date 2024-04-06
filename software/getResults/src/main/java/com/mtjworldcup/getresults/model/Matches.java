@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.getresults.model;
 
 import java.util.List;
 
