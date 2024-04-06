@@ -1,4 +1,4 @@
-package com.mtjworldcup;
+package com.mtjworldcup.getmytypings;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
