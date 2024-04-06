@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.getbydate.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

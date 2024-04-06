@@ -1,7 +1,7 @@
-package com.mtjworldcup.mapper;
+package com.mtjworldcup.getbydate.mapper;
 
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.MatchDto;
+import com.mtjworldcup.getbydate.model.MatchDto;
 
 import java.util.List;
 

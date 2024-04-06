@@ -1,4 +1,4 @@
-package com.mtjworldcup.model;
+package com.mtjworldcup.getbydate.model;
 
 import java.util.List;
 

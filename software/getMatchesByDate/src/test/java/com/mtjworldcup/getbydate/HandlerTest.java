@@ -1,4 +1,4 @@
-package com.mtjworldcup;
+package com.mtjworldcup.getbydate;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.model.Matches;
+import com.mtjworldcup.getbydate.Handler;
+import com.mtjworldcup.getbydate.model.Matches;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
