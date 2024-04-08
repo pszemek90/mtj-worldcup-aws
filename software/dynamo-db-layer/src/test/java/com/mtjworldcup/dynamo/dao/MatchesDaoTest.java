@@ -36,6 +36,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,7 +80,6 @@ class MatchesDaoTest{
         environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         try {
             log.info("Deleting table");
-            log.info("Existing tables before delete: {}", localstackDynamoClient.listTables().tableNames());
             matches.deleteTable();
             waitForTableDelete();
         } catch (ResourceNotFoundException e) {
@@ -113,7 +113,6 @@ class MatchesDaoTest{
             DescribeTableResponse matchesCreated = response.response()
                     .orElseThrow(() -> new NoSuchElementException("Table matches was not created"));
             log.info("Matches table was created. Table name: {}", matchesCreated.table().tableName());
-            log.info("Matches table: {}", matchesCreated.table());
         }
     }
 
@@ -140,7 +139,6 @@ class MatchesDaoTest{
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         //when
         List<Match> matchesFromDatabase = matchesDao.getByDate(matchDate);
-        log.info("Matches fetched from database: {}", matchesFromDatabase.size());
         //then
         assertEquals(1, matchesFromDatabase.size());
         assertEquals(LocalTime.of(11, 11), matchesFromDatabase.get(0).getStartTime());
@@ -157,8 +155,7 @@ class MatchesDaoTest{
         matches.putItem(matchFromDifferentDate);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         //when
-        List<Match> matchesFromDatabase = matchesDao.getByDate(matchDate);
-        log.info("Matches fetched from database: {}", matchesFromDatabase.size());
+        List<Match> matchesFromDatabase = loopResults(2, () -> matchesDao.getByDate(matchDate));
         //then
         assertEquals(2, matchesFromDatabase.size());
     }
@@ -226,7 +223,7 @@ class MatchesDaoTest{
     }
 
     @Test
-    void shouldReturnNoTypings_WhenNoTypingsInDb() {
+    void shouldReturnNoTypingsForUser_WhenNoTypingsInDb() {
         //given
         String userId = "user-123";
         //when
@@ -262,10 +259,50 @@ class MatchesDaoTest{
         assertEquals(1, typings.size());
     }
 
+    @Test
+    void shouldReturnNoTypings_WhenNoTypingsInDb() {
+        //when
+        List<Match> typings = matchesDao.getAllTypings();
+        //then
+        assertEquals(0, typings.size());
+    }
+
+    @Test
+    void shouldReturnTwoTypings_WhenTwoTypingsInDb() {
+        //given
+        Match typing = prepareTyping("user-123");
+        matches.putItem(typing);
+        Match typing2 = prepareTyping("user-124");
+        matches.putItem(typing2);
+        Match match = prepareMatchWithId("match-123");
+        matches.putItem(match);
+        //when
+        List<Match> typings = loopResults(2, matchesDao::getAllTypings);
+        //then
+        assertEquals(2, typings.size());
+    }
+
+    private List<Match> loopResults(int expectedSize, Supplier<List<Match>> methodToCall) {
+        int delay = 1000;
+        List<Match> matchesFromDatabase = methodToCall.get();
+        while(matchesFromDatabase.size() != expectedSize && delay < 35000){
+            log.info("Matches fetched from database: {}. Waiting {}ms", matchesFromDatabase.size(), delay);
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                fail("Thread was interrupted");
+            }
+            delay *= 2;
+            matchesFromDatabase = methodToCall.get();
+        }
+        return matchesFromDatabase;
+    }
+
     private Match prepareTyping(String userId) {
         Match match = new Match();
         match.setPrimaryId("match-123");
         match.setSecondaryId(userId);
+        match.setRecordType(RecordType.TYPING);
         return match;
     }
 

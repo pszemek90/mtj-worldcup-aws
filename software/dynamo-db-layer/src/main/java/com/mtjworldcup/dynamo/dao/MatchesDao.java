@@ -137,6 +137,20 @@ public class MatchesDao {
                 .toList();
     }
 
+    public List<Match> getAllTypings() {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.index(GET_BY_RECORD_TYPE_INDEX)
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional
+                                .keyEqualTo(Key.builder()
+                                        .partitionValue(RecordType.TYPING.name())
+                                        .build()))
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .toList();
+    }
+
     private DynamoDbClient prepareClient(boolean isLocal) {
         if(isLocal) {
             return DynamoDbClient.builder()
