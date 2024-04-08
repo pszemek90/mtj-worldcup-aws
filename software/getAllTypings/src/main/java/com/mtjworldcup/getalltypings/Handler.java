@@ -10,6 +10,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mtjworldcup.getalltypings.service.TypingsService;
 import org.slf4j.Logger;
 
+import java.util.Map;
+
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     public static final Logger log = org.slf4j.LoggerFactory.getLogger(Handler.class);
@@ -30,13 +32,20 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         try {
             var allTypings = typingsService.getAllTypings();
             String stringBody = objectMapper.writeValueAsString(allTypings);
-            return new APIGatewayProxyResponseEvent().withStatusCode(200).withBody(stringBody);
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(200)
+                    .withBody(stringBody)
+                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"));
         } catch (JsonProcessingException e) {
             log.error("Error occurred while creating a body string. Exception: {}", e.getMessage());
-            return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody("Server error occurred. Please contact support.");
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(500)
+                    .withBody("Server error occurred. Please contact support.");
         } catch (Exception e) {
             log.error("Unexpected server error occurred. Exception: {}", e.getMessage());
-            return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody("Server error occurred. Please contact support.");
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(500)
+                    .withBody("Server error occurred. Please contact support.");
         }
     }
 }
