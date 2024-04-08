@@ -17,6 +17,7 @@
         <module>cognito-layer</module>
         <module>getResults</module>
         <module>getMyTypings</module>
+        <module>getAllTypings</module>
     </modules>
 
     <properties>
