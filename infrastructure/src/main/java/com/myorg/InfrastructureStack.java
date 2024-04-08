@@ -37,6 +37,8 @@ public class InfrastructureStack extends Stack {
 
         Function getMyTypings = Lambda.createLambda(this, "getMyTypings", dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
 
+        Function getAllTypings = Lambda.createLambda(this, "getAllTypings", dynamoDbLayer, worldcupCommonLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -63,6 +65,8 @@ public class InfrastructureStack extends Stack {
         getMyTypings.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
         getMyTypings.addEnvironment(userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
 
+        getAllTypings.addEnvironment(matchesTableName, matchesTable.getTableName());
+
         EventBridgeRule.createRule(this, getMatchesFromApi);
 
         RestApi api = ApiGateway.createRestApi(this);
@@ -74,6 +78,10 @@ public class InfrastructureStack extends Stack {
                 .getParentResource()
                 .addResource("typings")
                 .addMethod("GET", LambdaIntegration.Builder.create(getMyTypings).build())
+                .getResource()
+                .getParentResource()
+                .addResource("all-typings")
+                .addMethod("GET", LambdaIntegration.Builder.create(getAllTypings).build())
                 .getResource()
                 .getParentResource()
                 .addResource("matches")
