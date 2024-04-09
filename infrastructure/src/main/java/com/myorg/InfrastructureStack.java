@@ -25,19 +25,23 @@ public class InfrastructureStack extends Stack {
         LayerVersion worldcupCommonLayer = Lambda.createLayer(this, "worldcup-common-layer");
         LayerVersion cognitoLayer = Lambda.createLayer(this, "cognito-layer");
 
-        Function getMatchesFromApi = Lambda.createLambda(this, "getMatchesFromApi",
+        Function getMatchesFromApi = Lambda.createLambda(this, "getMatchesFromApi", "getfromapi",
                 dynamoDbLayer, worldcupCommonLayer);
 
-        Function getMatchesByDate = Lambda.createLambda(this, "getMatchesByDate",
+        Function getMatchesByDate = Lambda.createLambda(this, "getMatchesByDate", "getbydate",
                 dynamoDbLayer, worldcupCommonLayer);
 
-        Function postTypes = Lambda.createLambda(this, "postTypes", dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
+        Function postTypes = Lambda.createLambda(this, "postTypes", "posttypes",
+                dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
 
-        Function getResults = Lambda.createLambda(this, "getResults", dynamoDbLayer, worldcupCommonLayer);
+        Function getResults = Lambda.createLambda(this, "getResults", "getresults",
+                dynamoDbLayer, worldcupCommonLayer);
 
-        Function getMyTypings = Lambda.createLambda(this, "getMyTypings", dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
+        Function getMyTypings = Lambda.createLambda(this, "getMyTypings", "getmytypings",
+                dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
 
-        Function getAllTypings = Lambda.createLambda(this, "getAllTypings", dynamoDbLayer, worldcupCommonLayer);
+        Function getAllTypings = Lambda.createLambda(this, "getAllTypings", "getalltypings",
+                dynamoDbLayer, worldcupCommonLayer);
 
         TableV2 matchesTable = DynamoDb.createTable(this);
 

@@ -21,10 +21,10 @@ import static software.amazon.awscdk.services.lambda.Runtime.JAVA_17;
 public class Lambda {
     private Lambda() {}
 
-    public static Function createLambda(Construct scope, String lambdaName, LayerVersion... layers) {
+    public static Function createLambda(Construct scope, String lambdaName, String packageName,  LayerVersion... layers) {
         List<String> packagingInstructions = createPackagingInstructions(lambdaName);
         BundlingOptions.Builder bundlingOptions = createBundlingOptions(packagingInstructions);
-        return createFunction(scope, lambdaName, bundlingOptions, layers);
+        return createFunction(scope, lambdaName, bundlingOptions, packageName, layers);
     }
 
     public static LayerVersion createLayer(Construct scope, String layerName) {
@@ -57,14 +57,14 @@ public class Lambda {
                 .outputType(ARCHIVED);
     }
 
-    private static Function createFunction(Construct scope, String lambdaName, BundlingOptions.Builder bundlingOptions, LayerVersion... layers) {
+    private static Function createFunction(Construct scope, String lambdaName, BundlingOptions.Builder bundlingOptions, String packageName, LayerVersion... layers) {
         return new Function(scope, lambdaName, FunctionProps.builder()
                 .runtime(JAVA_17)
                 .code(Code.fromAsset("../software/",
                         AssetOptions.builder()
                                 .bundling(bundlingOptions.build())
                                 .build()))
-                .handler("com.mtjworldcup.Handler")
+                .handler(MessageFormat.format("com.mtjworldcup.{0}.Handler", packageName))
                 .memorySize(1024)
                 .timeout(Duration.seconds(30))
                 .logRetention(RetentionDays.ONE_WEEK)
