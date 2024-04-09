@@ -29,17 +29,17 @@ class CognitoJwtVerifierServiceTest {
         String token = Files.readString(Path.of("src/test/resources/jwt.txt"));
         CognitoJwtVerifierService spy = spy(service);
         doReturn(true).when(spy).verifyToken(any());
-        doReturn(true).when(spy).userExists(any());
-        String subject = spy.getSubject(token);
-        String expectedSubject = "test_subject";
-        assertEquals(expectedSubject, subject);
+        doReturn("user-1").when(spy).getUsername(any());
+        String username = spy.checkUser(token);
+        String expectedUsername = "user-1";
+        assertEquals(expectedUsername, username);
     }
 
     @Test
     void shouldPassTokenVerification_WhenCorrectTokenPassed() throws Exception{
         String token = Files.readString(Path.of("src/test/resources/jwt.txt"));
         CognitoJwtVerifierService spy = spy(service);
-        doReturn(true).when(spy).userExists(any());
+        doReturn("user-1").when(spy).getUsername(any());
         environmentVariables.set("JWKS_URL", "file:src/test/resources/jwks.json");
         JWT jwt = JWTParser.parse(token);
         assertTrue(service.verifyToken(jwt));

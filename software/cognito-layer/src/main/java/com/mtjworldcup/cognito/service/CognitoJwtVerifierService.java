@@ -16,34 +16,34 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminGetUserRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminGetUserResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType;
 
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 public class CognitoJwtVerifierService {
 
     private static final Logger log = LoggerFactory.getLogger(CognitoJwtVerifierService.class);
 
-    public String getSubject(String token) throws SignatureVerifierException {
+    public String checkUser(String token) throws SignatureVerifierException {
         try {
             JWT jwt = JWTParser.parse(token);
             if(!verifyToken(jwt))
                 throw new SignatureVerifierException("Signature for token was not verified!");
             JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
             String subject = jwtClaimsSet.getSubject();
-            if(!userExists(subject)){
-                throw new NoSuchElementException("User does not exist in user pool");
-            }
-            return subject;
+            return getUsername(subject);
         } catch (ParseException e) {
             throw new SignatureVerifierException("Parsing token to JWT failed. Cause: " + e.getMessage());
         }
     }
 
-    boolean userExists(String subject) {
+    String getUsername(String subject) {
         log.debug("Checking if user exists for subject: {}", subject);
         try(CognitoIdentityProviderClient client = CognitoIdentityProviderClient.builder()
                 .credentialsProvider(DefaultCredentialsProvider.create())
@@ -55,11 +55,17 @@ public class CognitoJwtVerifierService {
                     .userPoolId(userPoolId)
                     .username(subject)
                     .build();
-            client.adminGetUser(request);
-            return true;
+            AdminGetUserResponse adminGetUserResponse = client.adminGetUser(request);
+            return Optional.of(adminGetUserResponse)
+                    .map(AdminGetUserResponse::userAttributes)
+                    .flatMap(attributes -> attributes.stream()
+                            .filter(attribute -> attribute.name().equals("preferred_username"))
+                            .findFirst()
+                            .map(AttributeType::value))
+                    .orElseThrow(() -> new NoSuchElementException("User does not exist in user pool"));
         } catch (Exception e) {
             log.warn("User does not exist in user pool. Cause: {}", e.getMessage());
-            return false;
+            throw new NoSuchElementException("User does not exist in user pool");
         }
     }
 
