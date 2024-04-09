@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.posttypes.Handler;
 import com.mtjworldcup.posttypes.model.MatchDto;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import org.junit.jupiter.api.Test;
@@ -30,20 +29,20 @@ class HandlerTest {
     @Test
     void shouldReturn403_WhenTokenNotVerified() throws Exception{
         //given
-        when(cognitoJwtVerifierService.getSubject(any())).thenThrow(SignatureVerifierException.class);
+        when(cognitoJwtVerifierService.checkUser(any())).thenThrow(SignatureVerifierException.class);
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent().withHeaders(
                 Map.of("Authorization", "Bearer someToken"));
         //when
         var response = handler.handleRequest(input, null);
         //then
         assertEquals(403, response.getStatusCode());
-        verify(cognitoJwtVerifierService).getSubject("someToken");
+        verify(cognitoJwtVerifierService).checkUser("someToken");
     }
 
     @Test
     void shouldTryToSaveTypes_WhenTokenVerified() throws Exception{
         //given
-        when(cognitoJwtVerifierService.getSubject(any())).thenReturn("someSubject");
+        when(cognitoJwtVerifierService.checkUser(any())).thenReturn("someSubject");
         MatchDto[] types = {new MatchDto("match-123", 1, 1)};
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent()
                 .withHeaders(Map.of("Authorization", "Bearer someToken"))
@@ -60,7 +59,7 @@ class HandlerTest {
     @Test
     void shouldNotTryToSaveTypes_WhenNoTypesPassDateCriteria() throws Exception{
         //given
-        when(cognitoJwtVerifierService.getSubject(any())).thenReturn("someSubject");
+        when(cognitoJwtVerifierService.checkUser(any())).thenReturn("someSubject");
         MatchDto[] types = {new MatchDto("match-123", 1, 1)};
         APIGatewayProxyRequestEvent input = new APIGatewayProxyRequestEvent()
                 .withHeaders(Map.of("Authorization", "Bearer someToken"))

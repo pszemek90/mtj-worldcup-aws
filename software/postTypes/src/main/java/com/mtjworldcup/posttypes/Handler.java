@@ -46,7 +46,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         String authorizationHeader = input.getHeaders().get("Authorization");
         String bearerToken = authorizationHeader.substring("Bearer ".length());
         try {
-            String secondaryId = cognitoJwtVerifierService.getSubject(bearerToken);
+            String secondaryId = cognitoJwtVerifierService.checkUser(bearerToken);
             String body = input.getBody();
             log.info("Input body: {}", body);
             MatchDto[] matchDtos = objectMapper.readValue(body, MatchDto[].class);
