@@ -42,7 +42,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         try {
             String authorizationHeader = input.getHeaders().get("Authorization");
             String bearerToken = authorizationHeader.substring("Bearer ".length());
-            String userId = cognitoJwtVerifierService.getSubject(bearerToken);
+            String userId = cognitoJwtVerifierService.checkUser(bearerToken);
             log.info("Getting typings for user: {}", userId);
             List<Match> typingRecords = matchesDao.getTypings(userId);
             var typings = TypingMapper.mapToDto(typingRecords);

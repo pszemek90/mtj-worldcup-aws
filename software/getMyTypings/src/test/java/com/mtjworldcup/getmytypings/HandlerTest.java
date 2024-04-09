@@ -9,7 +9,6 @@ import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
-import com.mtjworldcup.getmytypings.Handler;
 import com.mtjworldcup.getmytypings.model.Typing;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +60,7 @@ class HandlerTest {
         String token = "Bearer testToken";
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
         String testUserId = "testUserId";
-        when(cognitoJwtVerifierService.getSubject("testToken")).thenReturn(testUserId);
+        when(cognitoJwtVerifierService.checkUser("testToken")).thenReturn(testUserId);
         when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
         //when
         var response = handler.handleRequest(request, null);
@@ -77,7 +76,7 @@ class HandlerTest {
         //given
         String token = "Bearer testToken";
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
-        when(cognitoJwtVerifierService.getSubject("testToken")).thenThrow(new SignatureVerifierException("No user found for token"));
+        when(cognitoJwtVerifierService.checkUser("testToken")).thenThrow(new SignatureVerifierException("No user found for token"));
         //when
         var response = handler.handleRequest(request, null);
         //then
@@ -92,7 +91,7 @@ class HandlerTest {
         String token = "Bearer testToken";
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
         String testUserId = "testUserId";
-        when(cognitoJwtVerifierService.getSubject(token)).thenReturn(testUserId);
+        when(cognitoJwtVerifierService.checkUser(token)).thenReturn(testUserId);
         when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
         when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("testJsonProcessingException") {
         });
