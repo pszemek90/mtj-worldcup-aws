@@ -37,10 +37,12 @@ public class TypingsService {
     public Map<LocalDate, Map<String, Set<TypingDto>>> getAllTypings() {
         try {
             List<Match> allTypings = matchesDao.getAllTypings();
+            log.info("Typings fetched from DB: {}.", allTypings);
             List<Match> typingsForFinishedMatches = allTypings.stream()
                     .filter(match -> match.getTypingStatus() != TypingStatus.UNKNOWN)
                     .toList();
             var typingDtos = TypingMapper.toTypingDto(typingsForFinishedMatches);
+            log.info("Typings mapped to DTOs: {}.", typingDtos);
             return typingDtos.stream()
                     .collect(
                             groupingBy(
