@@ -43,7 +43,7 @@ public class DynamoDb {
                                         .build())
                                 .indexName("getByDate")
                                 .projectionType(ProjectionType.INCLUDE)
-                                .nonKeyAttributes(List.of("home_team", "away_team", "start_time", "record_type"))
+                                .nonKeyAttributes(List.of("home_team", "away_team", "start_time", "record_type", "pool"))
                                 .readCapacity(Capacity.fixed(1))
                                 .writeCapacity(Capacity.autoscaled(
                                         AutoscaledCapacityOptions.builder()
