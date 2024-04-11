@@ -10,7 +10,7 @@ public class MatchMapper {
     private MatchMapper(){}
 
     public static MatchDto mapToDto(Match entity) {
-        return new MatchDto(entity.getPrimaryId(), entity.getDate(), entity.getStartTime(), entity.getHomeTeam(), entity.getAwayTeam());
+        return new MatchDto(entity.getPrimaryId(), entity.getDate(), entity.getStartTime(), entity.getHomeTeam(), entity.getAwayTeam(), entity.getPool());
     }
 
     public static List<MatchDto> mapToDto(List<Match> entities) {
