@@ -282,6 +282,36 @@ class MatchesDaoTest{
         assertEquals(2, typings.size());
     }
 
+    @Test
+    void shouldReturn100OverallPool_When100InDb() {
+        //given
+        Match overallPool = prepareOverallPool(100);
+        matches.putItem(overallPool);
+        //when
+        Match overallPoolFromDb = matchesDao.getOverallPool();
+        //then
+        assertEquals(100, overallPoolFromDb.getPool());
+    }
+
+    @Test
+    void shouldReturn200OverallPool_When200InDb() {
+        //given
+        Match overallPool = prepareOverallPool(200);
+        matches.putItem(overallPool);
+        //when
+        Match overallPoolFromDb = matchesDao.getOverallPool();
+        //then
+        assertEquals(200, overallPoolFromDb.getPool());
+    }
+
+    private Match prepareOverallPool(int overallPool) {
+        Match match = new Match();
+        match.setPrimaryId("overall_pool");
+        match.setSecondaryId("overall_pool");
+        match.setPool(overallPool);
+        return match;
+    }
+
     private List<Match> loopResults(int expectedSize, Supplier<List<Match>> methodToCall) {
         int delay = 1000;
         List<Match> matchesFromDatabase = methodToCall.get();

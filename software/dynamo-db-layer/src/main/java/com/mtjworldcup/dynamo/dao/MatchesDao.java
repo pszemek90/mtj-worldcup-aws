@@ -24,6 +24,7 @@ public class MatchesDao {
     private static final String GET_BY_SECONDARY_ID_INDEX = "getBySecondaryId";
     private static final String GET_BY_DATE_INDEX = "getByDate";
     private static final String GET_BY_RECORD_TYPE_INDEX = "getByRecordType";
+    private static final String OVERALL_POOL = "overall_pool";
 
     private final DynamoDbClient dynamoClient;
     private final DynamoDbEnhancedClient enhancedClient;
@@ -149,6 +150,16 @@ public class MatchesDao {
                 .stream()
                 .flatMap(page -> page.items().stream())
                 .toList();
+    }
+
+    public Match getOverallPool() {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.getItem(GetItemEnhancedRequest.builder()
+                .key(builder -> builder
+                        .partitionValue(OVERALL_POOL)
+                        .sortValue(OVERALL_POOL)
+                        .build())
+                .build());
     }
 
     private DynamoDbClient prepareClient(boolean isLocal) {
