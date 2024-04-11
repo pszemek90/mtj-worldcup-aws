@@ -18,6 +18,7 @@
         <module>getResults</module>
         <module>getMyTypings</module>
         <module>getAllTypings</module>
+        <module>getOverallPool</module>
     </modules>
 
     <properties>
