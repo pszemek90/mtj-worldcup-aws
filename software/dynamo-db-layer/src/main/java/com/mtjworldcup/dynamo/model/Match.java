@@ -20,6 +20,7 @@ public class Match {
     private TypingStatus typingStatus;
     private MatchStatus matchStatus;
     private RecordType recordType;
+    private int pool;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -135,6 +136,14 @@ public class Match {
         this.recordType = recordType;
     }
 
+    public int getPool() {
+        return pool;
+    }
+
+    public void setPool(int pool) {
+        this.pool = pool;
+    }
+
     @Override
     public String toString() {
         return "Match{" +
@@ -148,7 +157,9 @@ public class Match {
                 ", awayScore=" + awayScore +
                 ", correctTypings=" + correctTypings +
                 ", typingStatus=" + typingStatus +
+                ", matchStatus=" + matchStatus +
                 ", recordType=" + recordType +
+                ", pool=" + pool +
                 '}';
     }
 }

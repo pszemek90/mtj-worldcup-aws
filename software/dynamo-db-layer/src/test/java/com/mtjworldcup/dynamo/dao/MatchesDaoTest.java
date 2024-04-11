@@ -95,7 +95,7 @@ class MatchesDaoTest{
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
                                 .projection(projection -> projection
                                         .projectionType(ProjectionType.INCLUDE)
-                                        .nonKeyAttributes("home_team", "away_team", "start_time", "record_type")),
+                                        .nonKeyAttributes("home_team", "away_team", "start_time", "record_type", "pool")),
                         gsi -> gsi.indexName("getByRecordType")
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
                                 .projection(projection -> projection
