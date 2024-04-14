@@ -67,7 +67,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 entity.setTypingStatus(TypingStatus.UNKNOWN);
             }
             if(!filteredEntities.isEmpty()){
-                matchesDao.save(filteredEntities);
+                matchesDao.saveTypings(filteredEntities);
             } else {
                 return new APIGatewayProxyResponseEvent().withStatusCode(204);
             }

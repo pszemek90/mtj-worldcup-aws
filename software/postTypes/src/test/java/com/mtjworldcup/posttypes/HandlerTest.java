@@ -53,7 +53,7 @@ class HandlerTest {
         var response = handler.handleRequest(input, null);
         //then
         assertEquals(201, response.getStatusCode());
-        verify(matchesDao).save(any());
+        verify(matchesDao).saveTypings(any());
     }
 
     @Test
@@ -70,7 +70,7 @@ class HandlerTest {
         //when
         var response = handler.handleRequest(input, null);
         //then
-        verify(matchesDao, times(0)).save(any());
+        verify(matchesDao, times(0)).saveTypings(any());
         assertEquals(204, response.getStatusCode());
     }
 
