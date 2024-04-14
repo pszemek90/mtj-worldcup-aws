@@ -155,7 +155,7 @@ class MatchesDaoTest {
         matches.putItem(matchFromDifferentDate);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         //when
-        List<Match> matchesFromDatabase = loopResults(2, () -> matchesDao.getByDate(matchDate));
+        List<Match> matchesFromDatabase = matchesDao.getByDate(matchDate);
         //then
         assertEquals(2, matchesFromDatabase.size());
     }
@@ -319,7 +319,7 @@ class MatchesDaoTest {
         Match match = prepareMatchWithId("match-123");
         matches.putItem(match);
         //when
-        List<Match> typings = loopResults(2, matchesDao::getAllTypings);
+        List<Match> typings = matchesDao.getAllTypings();
         //then
         assertEquals(2, typings.size());
     }
@@ -352,22 +352,6 @@ class MatchesDaoTest {
         match.setSecondaryId("overall_pool");
         match.setPool(overallPool);
         return match;
-    }
-
-    private List<Match> loopResults(int expectedSize, Supplier<List<Match>> methodToCall) {
-        int delay = 1000;
-        List<Match> matchesFromDatabase = methodToCall.get();
-        while (matchesFromDatabase.size() != expectedSize && delay < 35000) {
-            log.info("Matches fetched from database: {}. Waiting {}ms", matchesFromDatabase.size(), delay);
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                fail("Thread was interrupted");
-            }
-            delay *= 2;
-            matchesFromDatabase = methodToCall.get();
-        }
-        return matchesFromDatabase;
     }
 
     private Match prepareUser(String userId) {
@@ -429,6 +413,7 @@ class MatchesDaoTest {
         match.setHomeTeam("team" + (1 + 2));
         match.setRecordType(RecordType.MATCH);
         match.setMatchStatus(MatchStatus.SCHEDULED);
+        match.setPool(0);
         return match;
     }
 }
