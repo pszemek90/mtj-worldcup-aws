@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
@@ -86,13 +85,12 @@ public class MatchesDao {
                 .toList();
     }
 
-    public Match getById(String primaryId) {
+    public Match getById(String id) {
         var matches = getMatchTable();
         return matches.getItem(GetItemEnhancedRequest.builder()
                 .key(builder -> builder
-                        .partitionValue(primaryId)
-                        .sortValue(primaryId)
-                        .build())
+                        .partitionValue(id)
+                        .sortValue(id))
                 .build());
     }
 
@@ -131,9 +129,12 @@ public class MatchesDao {
                 matchTable.putItem(builder -> builder.item(typing));
             } else {
                 Match match = getById(typing.getPrimaryId());
+                if (match == null)
+                    throw new NoSuchElementException("Match not found for id: " + typing.getPrimaryId());
                 match.setPool(match.getPool() + 1);
-                Match user = getBySecondaryId(typing.getSecondaryId())
-                        .orElseThrow(() -> new NoSuchElementException("No user found for secondary id: " + typing.getSecondaryId()));
+                Match user = getById(typing.getSecondaryId());
+                if (user == null)
+                    throw new NoSuchElementException("User not found for id: " + typing.getSecondaryId());
                 user.setPool(user.getPool() - 1);
                 var putTypingRequest = TransactPutItemEnhancedRequest.builder(Match.class)
                         .item(typing)
@@ -166,20 +167,6 @@ public class MatchesDao {
                         .sortValue(secondaryId)
                         .build())
                 .build());
-    }
-
-    private Optional<Match> getBySecondaryId(String secondaryId) {
-        DynamoDbTable<Match> matchTable = getMatchTable();
-        return matchTable.index(GET_BY_SECONDARY_ID_INDEX)
-                .query(QueryEnhancedRequest.builder()
-                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
-                                .partitionValue(secondaryId)
-                                .sortValue(secondaryId)
-                                .build()))
-                        .build())
-                .stream()
-                .flatMap(page -> page.items().stream())
-                .findFirst();
     }
 
     public List<Match> getTypings(String userId) {

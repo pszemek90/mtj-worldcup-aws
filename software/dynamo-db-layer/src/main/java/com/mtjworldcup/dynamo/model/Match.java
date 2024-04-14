@@ -20,7 +20,7 @@ public class Match {
     private TypingStatus typingStatus;
     private MatchStatus matchStatus;
     private RecordType recordType;
-    private int pool;
+    private Integer pool;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -136,11 +136,11 @@ public class Match {
         this.recordType = recordType;
     }
 
-    public int getPool() {
+    public Integer getPool() {
         return pool;
     }
 
-    public void setPool(int pool) {
+    public void setPool(Integer pool) {
         this.pool = pool;
     }
 
