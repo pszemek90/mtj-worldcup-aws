@@ -46,6 +46,9 @@ public class InfrastructureStack extends Stack {
         Function getOverallPool = Lambda.createLambda(this, "getOverallPool", "getoverallpool",
                 dynamoDbLayer, worldcupCommonLayer);
 
+        Function getUserProfile = Lambda.createLambda(this, "getUserProfile", "getuserprofile",
+                dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -76,6 +79,10 @@ public class InfrastructureStack extends Stack {
 
         getOverallPool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
+        getUserProfile.addEnvironment(userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
+        getUserProfile.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
+        getUserProfile.addEnvironment(matchesTableName, matchesTable.getTableName());
+
         EventBridgeRule.createRule(this, getMatchesFromApi);
 
         RestApi api = ApiGateway.createRestApi(this);
@@ -95,6 +102,10 @@ public class InfrastructureStack extends Stack {
                 .getParentResource()
                 .addResource("overall-pool")
                 .addMethod("GET", LambdaIntegration.Builder.create(getOverallPool).build())
+                .getResource()
+                .getParentResource()
+                .addResource("user-profile")
+                .addMethod("GET", LambdaIntegration.Builder.create(getUserProfile).build())
                 .getResource()
                 .getParentResource()
                 .addResource("matches")
