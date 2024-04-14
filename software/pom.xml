@@ -19,6 +19,7 @@
         <module>getMyTypings</module>
         <module>getAllTypings</module>
         <module>getOverallPool</module>
+        <module>getUserProfile</module>
     </modules>
 
     <properties>
