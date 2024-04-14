@@ -9,11 +9,14 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
 
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
@@ -86,21 +89,20 @@ public class MatchesDao {
     public Match getById(String primaryId) {
         var matches = getMatchTable();
         return matches.getItem(GetItemEnhancedRequest.builder()
-                        .key(builder -> builder
-                                .partitionValue(primaryId)
-                                .sortValue(primaryId)
-                                .build())
+                .key(builder -> builder
+                        .partitionValue(primaryId)
+                        .sortValue(primaryId)
+                        .build())
                 .build());
     }
 
     public DynamoDbTable<Match> getMatchTable() {
         String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
-        log.info("Matches table name: {}", matchesTableName);
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
     }
 
     public BatchWriteResult save(List<Match> filteredEntities) {
-        if(filteredEntities == null) {
+        if (filteredEntities == null) {
             throw new IllegalStateException("Attempt to save null list of entities");
         }
         log.info("Saving {} records to DB", filteredEntities.size());
@@ -117,12 +119,75 @@ public class MatchesDao {
         return enhancedClient.batchWriteItem(batchRequest);
     }
 
+    public void saveTypings(List<Match> typings) {
+        if (typings == null) {
+            throw new IllegalStateException("Attempt to save null list of typings");
+        }
+        log.info("Saving {} typings to DB", typings.size());
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        typings.forEach(typing -> {
+            Match existingTyping = getByCombinedKey(typing.getPrimaryId(), typing.getSecondaryId());
+            if (existingTyping != null) {
+                matchTable.putItem(builder -> builder.item(typing));
+            } else {
+                Match match = getById(typing.getPrimaryId());
+                match.setPool(match.getPool() + 1);
+                Match user = getBySecondaryId(typing.getSecondaryId())
+                        .orElseThrow(() -> new NoSuchElementException("No user found for secondary id: " + typing.getSecondaryId()));
+                user.setPool(user.getPool() - 1);
+                var putTypingRequest = TransactPutItemEnhancedRequest.builder(Match.class)
+                        .item(typing)
+                        .build();
+                var updateMatchPool = TransactUpdateItemEnhancedRequest.builder(Match.class)
+                        .item(match)
+                        .build();
+                var updateUserPool = TransactUpdateItemEnhancedRequest.builder(Match.class)
+                        .item(user)
+                        .build();
+                var transactionRequest = TransactWriteItemsEnhancedRequest.builder()
+                        .addPutItem(matchTable, putTypingRequest)
+                        .addUpdateItem(matchTable, updateMatchPool)
+                        .addUpdateItem(matchTable, updateUserPool)
+                        .build();
+                try {
+                    enhancedClient.transactWriteItems(transactionRequest);
+                } catch (TransactionCanceledException e) {
+                    log.info("Transaction cancelled. User: {}. Cause: {}", user.getSecondaryId(), e.getMessage());
+                }
+            }
+        });
+    }
+
+    private Match getByCombinedKey(String primaryId, String secondaryId) {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.getItem(GetItemEnhancedRequest.builder()
+                .key(builder -> builder
+                        .partitionValue(primaryId)
+                        .sortValue(secondaryId)
+                        .build())
+                .build());
+    }
+
+    private Optional<Match> getBySecondaryId(String secondaryId) {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.index(GET_BY_SECONDARY_ID_INDEX)
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(secondaryId)
+                                .sortValue(secondaryId)
+                                .build()))
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst();
+    }
+
     public List<Match> getTypings(String userId) {
         DynamoDbTable<Match> matchTable = getMatchTable();
         return matchTable.index(GET_BY_SECONDARY_ID_INDEX)
                 .query(QueryEnhancedRequest.builder()
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
-                                        .partitionValue(userId)
+                                .partitionValue(userId)
                                 .build()))
                         .attributesToProject(List.of(
                                 "date",
@@ -130,8 +195,14 @@ public class MatchesDao {
                                 "away_team",
                                 "home_score",
                                 "away_score",
-                                "typing_status"
-                        ))
+                                "typing_status"))
+                        .filterExpression(Expression.builder()
+                                .expression("#recordType = :recordType")
+                                .putExpressionName("#recordType", "record_type")
+                                .putExpressionValue(":recordType", AttributeValue.builder()
+                                        .s(RecordType.TYPING.name())
+                                        .build())
+                                .build())
                         .build())
                 .stream()
                 .flatMap(page -> page.items().stream())
@@ -163,7 +234,7 @@ public class MatchesDao {
     }
 
     private DynamoDbClient prepareClient(boolean isLocal) {
-        if(isLocal) {
+        if (isLocal) {
             return DynamoDbClient.builder()
                     .region(EU_CENTRAL_1)
                     .endpointOverride(URI.create("http://local-ddb:8000"))

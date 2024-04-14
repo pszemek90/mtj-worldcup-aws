@@ -18,7 +18,6 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
@@ -39,12 +38,13 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 import static java.time.Month.OCTOBER;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(SystemStubsExtension.class)
 @Testcontainers
-class MatchesDaoTest{
+class MatchesDaoTest {
 
     private static final Logger log = LoggerFactory.getLogger(MatchesDaoTest.class);
     @SystemStub
@@ -106,7 +106,7 @@ class MatchesDaoTest{
     }
 
     static void waitForTableCreated() {
-        try(DynamoDbWaiter waiter = DynamoDbWaiter.builder().client(localstackDynamoClient).build()) {
+        try (DynamoDbWaiter waiter = DynamoDbWaiter.builder().client(localstackDynamoClient).build()) {
             var response = waiter
                     .waitUntilTableExists(builder -> builder.tableName("matches").build())
                     .matched();
@@ -116,14 +116,14 @@ class MatchesDaoTest{
         }
     }
 
-    static void waitForTableDelete(){
-        if(!localstackDynamoClient.listTables().tableNames().isEmpty()){
-            try(DynamoDbWaiter waiter = DynamoDbWaiter.builder().client(localstackDynamoClient).build()) {
+    static void waitForTableDelete() {
+        if (!localstackDynamoClient.listTables().tableNames().isEmpty()) {
+            try (DynamoDbWaiter waiter = DynamoDbWaiter.builder().client(localstackDynamoClient).build()) {
                 var response = waiter
                         .waitUntilTableNotExists(builder -> builder.tableName("matches").build())
                         .matched();
                 DescribeTableResponse matchesCreated = response.response()
-                        .orElseThrow(() -> new NoSuchElementException("Table was not deleted. " + response.exception().get().getMessage()) );
+                        .orElseThrow(() -> new NoSuchElementException("Table was not deleted. " + response.exception().get().getMessage()));
             }
         }
         log.info("Matches table was deleted");
@@ -172,14 +172,56 @@ class MatchesDaoTest{
     }
 
     @Test
-    void shouldSaveTwoTypes_WhenTwoDifferentMatchesPassed() throws Exception{
+    void shouldSaveTwoTypes_WhenTwoDifferentMatchesPassed() throws Exception {
         //given
-        Match match = prepareMatchWithId("match-123");
-        Match match2 = prepareMatchWithId("match-124");
+        String match123Id = "match-123";
+        Match match = prepareMatchWithId(match123Id);
+        String match124Id = "match-124";
+        Match match2 = prepareMatchWithId(match124Id);
+        String user123Id = "user-123";
+        Match user123 = prepareUser(user123Id);
+        matches.putItem(user123);
+        matches.putItem(match);
+        matches.putItem(match2);
+        Match typing1 = prepareTyping(match123Id, user123Id);
+        Match typing2 = prepareTyping(match124Id, user123Id);
         //when
-        BatchWriteResult writeResult = matchesDao.save(List.of(match, match2));
+        matchesDao.saveTypings(List.of(typing1, typing2));
         //then
-        assertEquals(2, matches.scan().items().stream().count());
+        List<Match> entities = matches.scan().items().stream().toList();
+        List<Match> typings = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.TYPING)).toList();
+        List<Match> matches = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.MATCH)).toList();
+        List<Match> users = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.USER)).toList();
+        assertEquals(2, typings.size());
+        assertEquals(2, matches.size());
+        assertEquals(1, users.size());
+        assertEquals(48, users.get(0).getPool());
+        assertEquals(1, matches.get(0).getPool());
+        assertEquals(1, matches.get(1).getPool());
+    }
+    @Test
+    void shouldChangeBalanceOnceAndScoresTwice_WhenTheSameTypePassedTwice() throws Exception {
+        //given
+        String match123Id = "match-123";
+        Match match = prepareMatchWithId(match123Id);
+        String user123Id = "user-123";
+        Match user123 = prepareUser(user123Id);
+        matches.putItem(user123);
+        matches.putItem(match);
+        Match typing1 = prepareTyping(match123Id, user123Id, 1, 1);
+        Match typing2 = prepareTyping(match123Id, user123Id, 2, 2);
+        //when
+        matchesDao.saveTypings(List.of(typing1, typing2));
+        //then
+        List<Match> entities = matches.scan().items().stream().toList();
+        List<Match> typings = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.TYPING)).toList();
+        List<Match> matches = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.MATCH)).toList();
+        List<Match> users = entities.stream().filter(entity -> entity.getRecordType().equals(RecordType.USER)).toList();
+        assertEquals(1, typings.size());
+        assertEquals(2, typings.get(0).getHomeScore());
+        assertEquals(2, typings.get(0).getAwayScore());
+        assertEquals(49, users.get(0).getPool());
+        assertEquals(1, matches.get(0).getPool());
     }
 
     @Test
@@ -315,7 +357,7 @@ class MatchesDaoTest{
     private List<Match> loopResults(int expectedSize, Supplier<List<Match>> methodToCall) {
         int delay = 1000;
         List<Match> matchesFromDatabase = methodToCall.get();
-        while(matchesFromDatabase.size() != expectedSize && delay < 35000){
+        while (matchesFromDatabase.size() != expectedSize && delay < 35000) {
             log.info("Matches fetched from database: {}. Waiting {}ms", matchesFromDatabase.size(), delay);
             try {
                 Thread.sleep(delay);
@@ -328,11 +370,35 @@ class MatchesDaoTest{
         return matchesFromDatabase;
     }
 
+    private Match prepareUser(String userId) {
+        Match user = new Match();
+        user.setPool(50);
+        user.setPrimaryId(userId);
+        user.setSecondaryId(userId);
+        user.setRecordType(RecordType.USER);
+        return user;
+    }
+
+    private Match prepareTyping(String matchId, String userId, Integer homeScore, Integer awayScore) {
+        Match match = prepareTyping(matchId, userId);
+        match.setHomeScore(homeScore);
+        match.setAwayScore(awayScore);
+        return match;
+    }
+
+    private Match prepareTyping(String matchId, String userId) {
+        Match match = prepareTyping(userId);
+        match.setPrimaryId(matchId);
+        return match;
+    }
+
     private Match prepareTyping(String userId) {
         Match match = new Match();
         match.setPrimaryId("match-123");
         match.setSecondaryId(userId);
         match.setRecordType(RecordType.TYPING);
+        match.setHomeScore(1);
+        match.setAwayScore(1);
         return match;
     }
 
