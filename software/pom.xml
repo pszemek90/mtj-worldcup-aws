@@ -20,6 +20,7 @@
         <module>getAllTypings</module>
         <module>getOverallPool</module>
         <module>getUserProfile</module>
+        <module>getTypersRank</module>
     </modules>
 
     <properties>
