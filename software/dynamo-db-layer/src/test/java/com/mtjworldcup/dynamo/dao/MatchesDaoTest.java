@@ -35,7 +35,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
-import java.util.function.Supplier;
 
 import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -231,7 +230,7 @@ class MatchesDaoTest {
         Match match2 = prepareMatchWithId("match-123");
         List<Match> filteredEntities = List.of(match, match2);
         //when, then
-        assertThrows(DynamoDbException.class, () -> matchesDao.save(filteredEntities));
+        assertThrows(DynamoDbException.class, () -> matchesDao.saveIfNotExists(filteredEntities));
     }
 
     @Test
