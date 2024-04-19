@@ -1,5 +1,6 @@
 package com.mtjworldcup.getfromapi.mapper;
 
+import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.getfromapi.model.MatchDto;
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.RecordType;
@@ -24,9 +25,9 @@ public class MatchMapper {
                 .atZone(ZoneId.of("Europe/Warsaw")).toLocalTime());
         match.setHomeTeam(dto.getTeams().getHome().getName());
         match.setAwayTeam(dto.getTeams().getAway().getName());
-        match.setHomeScore(dto.getGoals().getHome());
-        match.setAwayScore(dto.getGoals().getAway());
         match.setRecordType(RecordType.MATCH);
+        match.setMatchStatus(MatchStatus.SCHEDULED);
+        match.setPool(0);
         return match;
     }
 

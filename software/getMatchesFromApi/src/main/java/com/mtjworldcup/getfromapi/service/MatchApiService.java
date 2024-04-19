@@ -72,7 +72,7 @@ public class MatchApiService {
             throw new HttpClientException("Getting current season failed. Cause: " + e.getMessage());
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String from = now.plusDays(1).format(formatter);
+        String from = now.format(formatter);
         String to = now.plusDays(7).format(formatter);
         Request request = new Request.Builder()
                 .url(String.format("%s/fixtures?league=39&from=%s&to=%s&season=%d", baseUrl, from, to, currentSeason))

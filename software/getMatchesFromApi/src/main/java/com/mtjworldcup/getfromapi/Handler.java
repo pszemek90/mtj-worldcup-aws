@@ -34,7 +34,7 @@ public class Handler implements RequestHandler<Object, String> {
         log.info("Matches from api: {}", matchesFromApi);
         List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
         log.info("Entities for persist: {}", entitiesToPersist);
-        BatchWriteResult batchWriteResult = matchesDao.save(entitiesToPersist);
+        BatchWriteResult batchWriteResult = matchesDao.saveIfNotExists(entitiesToPersist);
         List<Match> unprocessedEntities = batchWriteResult.unprocessedPutItemsForTable(matchesDao.getMatchTable());
         if(!unprocessedEntities.isEmpty()) {
             log.warn("Unprocessed entities: {}", unprocessedEntities);
