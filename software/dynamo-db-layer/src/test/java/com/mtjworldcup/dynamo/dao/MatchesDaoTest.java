@@ -224,16 +224,6 @@ class MatchesDaoTest {
     }
 
     @Test
-    void shouldThrowException_WhenTwoSameMatchesPassed() {
-        //given
-        Match match = prepareMatchWithId("match-123");
-        Match match2 = prepareMatchWithId("match-123");
-        List<Match> filteredEntities = List.of(match, match2);
-        //when, then
-        assertThrows(DynamoDbException.class, () -> matchesDao.saveIfNotExists(filteredEntities));
-    }
-
-    @Test
     void shouldReturnOneMatch_WhenOnlyOneMatchFinished() {
         Match match = prepareFinishedMatchWithId("match-123");
         matches.putItem(match);

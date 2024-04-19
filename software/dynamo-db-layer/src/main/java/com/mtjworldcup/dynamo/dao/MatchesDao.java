@@ -99,27 +99,23 @@ public class MatchesDao {
         return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
     }
 
-    public BatchWriteResult saveIfNotExists(List<Match> filteredEntities) {
+    public void saveIfNotExists(List<Match> filteredEntities) {
         if (filteredEntities == null) {
             throw new IllegalStateException("Attempt to save null list of entities");
         }
         log.info("Saving {} records to DB", filteredEntities.size());
         DynamoDbTable<Match> matchTable = getMatchTable();
-        List<WriteBatch> writeBatches = filteredEntities.stream()
-                .map(entity -> WriteBatch.builder(Match.class)
-                        .mappedTableResource(matchTable)
-                        .addPutItem(builder ->
-                                builder
-                                .item(entity)
+        filteredEntities.forEach(entity -> {
+            try {
+                matchTable.putItem(builder ->
+                        builder.item(entity)
                                 .conditionExpression(Expression.builder()
                                         .expression("attribute_not_exists(primary_id) AND attribute_not_exists(secondary_id)")
-                                        .build()))
-                        .build())
-                .toList();
-        BatchWriteItemEnhancedRequest batchRequest = BatchWriteItemEnhancedRequest.builder()
-                .writeBatches(writeBatches)
-                .build();
-        return enhancedClient.batchWriteItem(batchRequest);
+                                        .build()));
+            } catch (Exception e) {
+                log.warn("Entity was not persisted correctly. Entity: {}. Cause: {}", entity, e.getMessage());
+            }
+        });
     }
 
     public void saveTypings(List<Match> typings) {
