@@ -15,9 +15,8 @@ public class EventBridgeRule {
     public static Rule createRule(Construct scope, IFunction handler) {
         return Rule.Builder.create(scope, "getMatchesCron")
                 .schedule(Schedule.cron(CronOptions.builder()
-                        .weekDay("SUNDAY")
-                        .hour("6")
-                        .minute("0")
+                        .hour("0")
+                        .minute("30")
                         .build()))
                 .targets(List.of(LambdaFunction.Builder.create(handler).build()))
                 .build();
