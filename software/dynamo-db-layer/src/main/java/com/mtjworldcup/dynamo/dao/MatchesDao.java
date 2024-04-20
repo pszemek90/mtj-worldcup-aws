@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
 
@@ -94,11 +95,6 @@ public class MatchesDao {
                 .build());
     }
 
-    public DynamoDbTable<Match> getMatchTable() {
-        String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
-        return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
-    }
-
     public void saveIfNotExists(List<Match> filteredEntities) {
         if (filteredEntities == null) {
             throw new IllegalStateException("Attempt to save null list of entities");
@@ -160,16 +156,6 @@ public class MatchesDao {
         });
     }
 
-    private Match getByCombinedKey(String primaryId, String secondaryId) {
-        DynamoDbTable<Match> matchTable = getMatchTable();
-        return matchTable.getItem(GetItemEnhancedRequest.builder()
-                .key(builder -> builder
-                        .partitionValue(primaryId)
-                        .sortValue(secondaryId)
-                        .build())
-                .build());
-    }
-
     public List<Match> getTypings(String userId) {
         DynamoDbTable<Match> matchTable = getMatchTable();
         return matchTable.index(GET_BY_SECONDARY_ID_INDEX)
@@ -221,15 +207,33 @@ public class MatchesDao {
                 .build());
     }
 
+    public void update(Match entity) {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        matchTable.updateItem(UpdateItemEnhancedRequest.builder(Match.class)
+                .item(entity)
+                .build());
+    }
+
+    private DynamoDbTable<Match> getMatchTable() {
+        String matchesTableName = System.getenv("MATCHES_TABLE_NAME");
+        return enhancedClient.table(matchesTableName, TableSchema.fromBean(Match.class));
+    }
+
+    private Match getByCombinedKey(String primaryId, String secondaryId) {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.getItem(GetItemEnhancedRequest.builder()
+                .key(builder -> builder
+                        .partitionValue(primaryId)
+                        .sortValue(secondaryId)
+                        .build())
+                .build());
+    }
+
     private DynamoDbClient prepareClient(boolean isLocal) {
-        if (isLocal) {
-            return DynamoDbClient.builder()
-                    .region(EU_CENTRAL_1)
-                    .endpointOverride(URI.create("http://local-ddb:8000"))
-                    .build();
-        }
-        return DynamoDbClient.builder()
-                .region(EU_CENTRAL_1)
-                .build();
+        DynamoDbClientBuilder builder = DynamoDbClient.builder()
+                .region(EU_CENTRAL_1);
+        return isLocal
+                ? builder.endpointOverride(URI.create("http://local-ddb:8000")).build()
+                : builder.build();
     }
 }

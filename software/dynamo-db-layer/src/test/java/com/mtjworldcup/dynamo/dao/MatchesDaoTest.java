@@ -21,7 +21,6 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
-import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
@@ -38,8 +37,6 @@ import java.util.Random;
 
 import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(SystemStubsExtension.class)
 @Testcontainers
@@ -119,15 +116,18 @@ class MatchesDaoTest {
                         .orElseThrow(() -> new NoSuchElementException("Table was not deleted. " + response.exception().get().getMessage()));
             }
         }
-        log.info("Matches table was deleted");
     }
 
     @Test
     void shouldReturnOneMatch_WhenOneDateIsMatching() {
         //given
-        Match match = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 11, 11));
+        Match match = prepareEntity();
+        match.setDate(LocalDate.of(2023, OCTOBER, 29));
+        match.setStartTime(LocalTime.of(11, 11));
         matches.putItem(match);
-        Match matchFromDifferentDate = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 30, 11, 11));
+        Match matchFromDifferentDate = prepareEntity();
+        matchFromDifferentDate.setDate(LocalDate.of(2023, OCTOBER, 30));
+        matchFromDifferentDate.setStartTime(LocalTime.of(11, 11));
         matches.putItem(matchFromDifferentDate);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         //when
@@ -140,11 +140,17 @@ class MatchesDaoTest {
     @Test
     void shouldReturnTwoMatches_WhenTwoMatchTheDate() {
         //given
-        Match match = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 11, 11));
+        Match match = prepareEntity();
+        match.setDate(LocalDate.of(2023, OCTOBER, 29));
+        match.setStartTime(LocalTime.of(11, 11));
         matches.putItem(match);
-        Match matchWithSameDate = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 29, 12, 12));
+        Match matchWithSameDate = prepareEntity();
+        matchWithSameDate.setDate(LocalDate.of(2023, OCTOBER, 29));
+        matchWithSameDate.setStartTime(LocalTime.of(12, 12));
         matches.putItem(matchWithSameDate);
-        Match matchFromDifferentDate = prepareMatchWithDate(LocalDateTime.of(2023, OCTOBER, 30, 11, 11));
+        Match matchFromDifferentDate = prepareEntity();
+        matchFromDifferentDate.setDate(LocalDate.of(2023, OCTOBER, 30));
+        matchFromDifferentDate.setStartTime(LocalTime.of(11, 11));
         matches.putItem(matchFromDifferentDate);
         LocalDate matchDate = LocalDate.of(2023, OCTOBER, 29);
         //when
@@ -156,7 +162,9 @@ class MatchesDaoTest {
     @Test
     void shouldReturnOneMatch_WhenOneMatchesPrimaryId() {
         //given
-        Match match = prepareMatchWithId("match-123");
+        Match match = prepareEntity();
+        match.setPrimaryId("match-123");
+        match.setSecondaryId("match-123");
         matches.putItem(match);
         //when
         Match matchFromDb = matchesDao.getById("match-123");
@@ -168,16 +176,30 @@ class MatchesDaoTest {
     void shouldSaveTwoTypes_WhenTwoDifferentMatchesPassed() throws Exception {
         //given
         String match123Id = "match-123";
-        Match match = prepareMatchWithId(match123Id);
+        Match match = prepareEntity();
+        match.setPrimaryId(match123Id);
+        match.setSecondaryId(match123Id);
         String match124Id = "match-124";
-        Match match2 = prepareMatchWithId(match124Id);
+        Match match2 = prepareEntity();
+        match2.setPrimaryId(match124Id);
+        match2.setSecondaryId(match124Id);
         String user123Id = "user-123";
-        Match user123 = prepareUser(user123Id);
+        Match user123 = prepareEntity();
+        user123.setPrimaryId(user123Id);
+        user123.setSecondaryId(user123Id);
+        user123.setRecordType(RecordType.USER);
+        user123.setPool(50);
         matches.putItem(user123);
         matches.putItem(match);
         matches.putItem(match2);
-        Match typing1 = prepareTyping(match123Id, user123Id);
-        Match typing2 = prepareTyping(match124Id, user123Id);
+        Match typing1 = prepareEntity();
+        typing1.setPrimaryId(match123Id);
+        typing1.setSecondaryId(user123Id);
+        typing1.setRecordType(RecordType.TYPING);
+        Match typing2 = prepareEntity();
+        typing2.setPrimaryId(match124Id);
+        typing2.setSecondaryId(user123Id);
+        typing2.setRecordType(RecordType.TYPING);
         //when
         matchesDao.saveTypings(List.of(typing1, typing2));
         //then
@@ -192,17 +214,34 @@ class MatchesDaoTest {
         assertEquals(1, matches.get(0).getPool());
         assertEquals(1, matches.get(1).getPool());
     }
+
     @Test
     void shouldChangeBalanceOnceAndScoresTwice_WhenTheSameTypePassedTwice() throws Exception {
         //given
         String match123Id = "match-123";
-        Match match = prepareMatchWithId(match123Id);
+        Match match = prepareEntity();
+        match.setPrimaryId(match123Id);
+        match.setSecondaryId(match123Id);
         String user123Id = "user-123";
-        Match user123 = prepareUser(user123Id);
+        Match user123 = prepareEntity();
+        user123.setPrimaryId(user123Id);
+        user123.setSecondaryId(user123Id);
+        user123.setRecordType(RecordType.USER);
+        user123.setPool(50);
         matches.putItem(user123);
         matches.putItem(match);
-        Match typing1 = prepareTyping(match123Id, user123Id, 1, 1);
-        Match typing2 = prepareTyping(match123Id, user123Id, 2, 2);
+        Match typing1 = prepareEntity();
+        typing1.setPrimaryId(match123Id);
+        typing1.setSecondaryId(user123Id);
+        typing1.setHomeScore(1);
+        typing1.setAwayScore(1);
+        typing1.setRecordType(RecordType.TYPING);
+        Match typing2 = prepareEntity();
+        typing2.setPrimaryId(match123Id);
+        typing2.setSecondaryId(user123Id);
+        typing2.setHomeScore(2);
+        typing2.setAwayScore(2);
+        typing2.setRecordType(RecordType.TYPING);
         //when
         matchesDao.saveTypings(List.of(typing1, typing2));
         //then
@@ -219,9 +258,12 @@ class MatchesDaoTest {
 
     @Test
     void shouldReturnOneMatch_WhenOnlyOneMatchFinished() {
-        Match match = prepareFinishedMatchWithId("match-123");
+        Match match = prepareEntity();
+        match.setMatchStatus(MatchStatus.FINISHED);
+        match.setPrimaryId("match-123");
         matches.putItem(match);
-        Match match1 = prepareMatchWithId("match-124");
+        Match match1 = prepareEntity();
+        match1.setPrimaryId("match-124");
         match1.setAwayScore(null);
         match1.setHomeScore(null);
         matches.putItem(match1);
@@ -233,13 +275,11 @@ class MatchesDaoTest {
 
     @Test
     void shouldReturnEmptyList_WhenNoMatchesFinished() {
-        Match match = prepareMatchWithId("match-123");
-        match.setHomeScore(null);
-        match.setAwayScore(null);
+        Match match = prepareEntity();
+        match.setPrimaryId("match-123");
         matches.putItem(match);
-        Match match1 = prepareMatchWithId("match-124");
-        match1.setAwayScore(null);
-        match1.setHomeScore(null);
+        Match match1 = prepareEntity();
+        match1.setPrimaryId("match-124");
         matches.putItem(match1);
         //when
         List<Match> finishedMatches = matchesDao.getFinishedMatches();
@@ -261,7 +301,9 @@ class MatchesDaoTest {
     void shouldReturnOneTyping_WhenOneTypingInDb() {
         //given
         String userId = "user-123";
-        Match typing = prepareTyping(userId);
+        Match typing = prepareEntity();
+        typing.setSecondaryId(userId);
+        typing.setRecordType(RecordType.TYPING);
         matches.putItem(typing);
         //when
         List<Match> typings = matchesDao.getTypings(userId);
@@ -273,10 +315,14 @@ class MatchesDaoTest {
     void shouldReturnOneTyping_WhenOneTypingForUserInDb() {
         //given
         String userId = "user-123";
-        Match typing = prepareTyping(userId);
+        Match typing = prepareEntity();
+        typing.setSecondaryId(userId);
+        typing.setRecordType(RecordType.TYPING);
         matches.putItem(typing);
         String differentUser = "user-124";
-        Match differentTyping = prepareTyping(differentUser);
+        Match differentTyping = prepareEntity();
+        differentTyping.setSecondaryId(differentUser);
+        differentTyping.setRecordType(RecordType.TYPING);
         matches.putItem(differentTyping);
         //when
         List<Match> typings = matchesDao.getTypings(userId);
@@ -295,11 +341,15 @@ class MatchesDaoTest {
     @Test
     void shouldReturnTwoTypings_WhenTwoTypingsInDb() {
         //given
-        Match typing = prepareTyping("user-123");
+        Match typing = prepareEntity();
+        typing.setRecordType(RecordType.TYPING);
+        typing.setSecondaryId("user-123");
         matches.putItem(typing);
-        Match typing2 = prepareTyping("user-124");
+        Match typing2 = prepareEntity();
+        typing2.setRecordType(RecordType.TYPING);
+        typing2.setSecondaryId("user-124");
         matches.putItem(typing2);
-        Match match = prepareMatchWithId("match-123");
+        Match match = prepareEntity();
         matches.putItem(match);
         //when
         List<Match> typings = matchesDao.getAllTypings();
@@ -310,7 +360,11 @@ class MatchesDaoTest {
     @Test
     void shouldReturn100OverallPool_When100InDb() {
         //given
-        Match overallPool = prepareOverallPool(100);
+        Match overallPool = prepareEntity();
+        overallPool.setPrimaryId("overall_pool");
+        overallPool.setSecondaryId("overall_pool");
+        overallPool.setPool(100);
+        overallPool.setRecordType(RecordType.POOL);
         matches.putItem(overallPool);
         //when
         Match overallPoolFromDb = matchesDao.getOverallPool();
@@ -321,7 +375,11 @@ class MatchesDaoTest {
     @Test
     void shouldReturn200OverallPool_When200InDb() {
         //given
-        Match overallPool = prepareOverallPool(200);
+        Match overallPool = prepareEntity();
+        overallPool.setPrimaryId("overall_pool");
+        overallPool.setSecondaryId("overall_pool");
+        overallPool.setPool(200);
+        overallPool.setRecordType(RecordType.POOL);
         matches.putItem(overallPool);
         //when
         Match overallPoolFromDb = matchesDao.getOverallPool();
@@ -329,62 +387,24 @@ class MatchesDaoTest {
         assertEquals(200, overallPoolFromDb.getPool());
     }
 
-    private Match prepareOverallPool(int overallPool) {
-        Match match = new Match();
-        match.setPrimaryId("overall_pool");
-        match.setSecondaryId("overall_pool");
-        match.setPool(overallPool);
-        return match;
-    }
-
-    private Match prepareUser(String userId) {
-        Match user = new Match();
-        user.setPool(50);
-        user.setPrimaryId(userId);
-        user.setSecondaryId(userId);
-        user.setRecordType(RecordType.USER);
-        return user;
-    }
-
-    private Match prepareTyping(String matchId, String userId, Integer homeScore, Integer awayScore) {
-        Match match = prepareTyping(matchId, userId);
-        match.setHomeScore(homeScore);
-        match.setAwayScore(awayScore);
-        return match;
-    }
-
-    private Match prepareTyping(String matchId, String userId) {
-        Match match = prepareTyping(userId);
-        match.setPrimaryId(matchId);
-        return match;
-    }
-
-    private Match prepareTyping(String userId) {
-        Match match = new Match();
-        match.setPrimaryId("match-123");
-        match.setSecondaryId(userId);
-        match.setRecordType(RecordType.TYPING);
-        match.setHomeScore(1);
-        match.setAwayScore(1);
-        return match;
-    }
-
-    private Match prepareFinishedMatchWithId(String matchId) {
-        Match match = prepareMatchWithId(matchId);
+    @Test
+    void shouldUpdateMatchStatus_WhenMatchStatusHasChanged() {
+        // given
+        Match match = prepareEntity();
+        match.setMatchStatus(MatchStatus.SCHEDULED);
+        matches.putItem(match);
         match.setMatchStatus(MatchStatus.FINISHED);
-        return match;
+        // when
+        matchesDao.update(match);
+        // then
+        Match matchFromDb = matchesDao.getById(match.getPrimaryId());
+        assertEquals(MatchStatus.FINISHED, matchFromDb.getMatchStatus());
     }
 
-    private Match prepareMatchWithId(String matchId) {
-        Match match = prepareMatchWithDate(LocalDateTime.now());
-        match.setPrimaryId(matchId);
-        match.setSecondaryId(matchId);
-        return match;
-    }
-
-    private Match prepareMatchWithDate(LocalDateTime date) {
+    private Match prepareEntity() {
         Random random = new Random();
         Match match = new Match();
+        LocalDateTime date = LocalDateTime.now();
         String id = "match-" + random.nextLong(100);
         match.setAwayScore(1 % 4);
         match.setHomeScore(1 % 2);
@@ -397,6 +417,7 @@ class MatchesDaoTest {
         match.setRecordType(RecordType.MATCH);
         match.setMatchStatus(MatchStatus.SCHEDULED);
         match.setPool(0);
+        match.setCorrectTypings(0);
         return match;
     }
 }
