@@ -42,8 +42,7 @@ public class DynamoDb {
                                         .type(AttributeType.STRING)
                                         .build())
                                 .indexName("getByDate")
-                                .projectionType(ProjectionType.INCLUDE)
-                                .nonKeyAttributes(List.of("home_team", "away_team", "start_time", "record_type", "pool"))
+                                .projectionType(ProjectionType.ALL)
                                 .readCapacity(Capacity.fixed(1))
                                 .writeCapacity(Capacity.autoscaled(
                                         AutoscaledCapacityOptions.builder()
@@ -56,8 +55,7 @@ public class DynamoDb {
                                         .type(AttributeType.STRING)
                                         .build())
                                 .indexName("getByRecordType")
-                                .projectionType(ProjectionType.INCLUDE)
-                                .nonKeyAttributes(List.of("home_team", "away_team", "home_score", "away_score", "date", "match_status", "typing_status"))
+                                .projectionType(ProjectionType.ALL)
                                 .readCapacity(Capacity.fixed(1))
                                 .writeCapacity(Capacity.autoscaled(
                                         AutoscaledCapacityOptions.builder()
