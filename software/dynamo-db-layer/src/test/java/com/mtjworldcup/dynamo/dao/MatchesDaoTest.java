@@ -78,13 +78,11 @@ class MatchesDaoTest {
     void purgeMatchTable() {
         environmentVariables.set("MATCHES_TABLE_NAME", "matches");
         try {
-            log.info("Deleting table");
             matches.deleteTable();
             waitForTableDelete();
         } catch (ResourceNotFoundException e) {
             log.info("Matches table does not exist");
         }
-        log.info("Creating table");
         matches.createTable(builder -> builder
                 .globalSecondaryIndices(
                         gsi -> gsi.indexName("getBySecondaryId")
@@ -93,14 +91,11 @@ class MatchesDaoTest {
                         gsi -> gsi.indexName("getByDate")
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
                                 .projection(projection -> projection
-                                        .projectionType(ProjectionType.INCLUDE)
-                                        .nonKeyAttributes("home_team", "away_team", "start_time", "record_type", "pool")),
+                                        .projectionType(ProjectionType.ALL)),
                         gsi -> gsi.indexName("getByRecordType")
                                 .provisionedThroughput(throughput -> throughput.writeCapacityUnits(1L).readCapacityUnits(1L))
                                 .projection(projection -> projection
-                                        .projectionType(ProjectionType.INCLUDE)
-                                        .nonKeyAttributes("home_team", "away_team", "home_score", "away_score", "match_status")))
-                .build());
+                                        .projectionType(ProjectionType.ALL))));
         waitForTableCreated();
     }
 
@@ -111,7 +106,6 @@ class MatchesDaoTest {
                     .matched();
             DescribeTableResponse matchesCreated = response.response()
                     .orElseThrow(() -> new NoSuchElementException("Table matches was not created"));
-            log.info("Matches table was created. Table name: {}", matchesCreated.table().tableName());
         }
     }
 
