@@ -1,6 +1,8 @@
 package com.mtjworldcup.getfromapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtjworldcup.common.model.MatchApiResponse;
+import com.mtjworldcup.common.model.MatchDto;
 import com.mtjworldcup.getfromapi.exception.HttpClientException;
 import com.mtjworldcup.getfromapi.model.*;
 import okhttp3.OkHttpClient;

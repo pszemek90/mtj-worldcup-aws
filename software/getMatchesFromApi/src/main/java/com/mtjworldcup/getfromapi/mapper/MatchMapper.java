@@ -1,7 +1,7 @@
 package com.mtjworldcup.getfromapi.mapper;
 
+import com.mtjworldcup.common.model.MatchDto;
 import com.mtjworldcup.dynamo.model.MatchStatus;
-import com.mtjworldcup.getfromapi.model.MatchDto;
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.RecordType;
 
@@ -17,8 +17,8 @@ public class MatchMapper {
 
     public static Match mapToEntity(MatchDto dto) {
         Match match = new Match();
-        match.setPrimaryId("match-" + dto.getFixture().getId());
-        match.setSecondaryId("match-" + dto.getFixture().getId());
+        match.setPrimaryId(dto.getFixture().getId().toString());
+        match.setSecondaryId(dto.getFixture().getId().toString());
         match.setDate(Instant.ofEpochSecond(dto.getFixture().getTimestamp())
                 .atZone(ZoneId.of("Europe/Warsaw")).toLocalDate());
         match.setStartTime(Instant.ofEpochSecond(dto.getFixture().getTimestamp())
