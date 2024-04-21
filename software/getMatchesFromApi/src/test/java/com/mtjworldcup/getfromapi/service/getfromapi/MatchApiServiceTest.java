@@ -55,6 +55,8 @@ class MatchApiServiceTest {
     void shouldReturnValidDtos_WhenCallWasSuccessful() throws Exception {
         //given
         environmentVariables.set("RAPID_API_KEY", "TEST");
+        environmentVariables.set("RAPID_API_HOST", "TEST");
+        environmentVariables.set("BASE_API_URL", baseUrl);
         String currentSeasonResponse = Files.readString(Path.of("src/test/resources/files/successful-get-seasons-response.json"));
         MockResponse mockCurrentSeasonResponse = new MockResponse()
                 .setResponseCode(200)
@@ -67,7 +69,7 @@ class MatchApiServiceTest {
         mockWebServer.enqueue(mockGetMatchesResponse);
         MatchApiService matchApiService = new MatchApiService(okHttpClient, objectMapper);
         //when
-        List<MatchDto> actualMatchesFromApi = matchApiService.getMatchesFromApi(baseUrl);
+        List<MatchDto> actualMatchesFromApi = matchApiService.getMatchesFromApi();
         //then
         int expectedMatchesFromApiSize = 17;
         assertEquals(expectedMatchesFromApiSize, actualMatchesFromApi.size());
@@ -77,6 +79,8 @@ class MatchApiServiceTest {
     void shouldNotInvokeGetMatches_WhenNoSeasonFound() throws Exception {
         //given
         environmentVariables.set("RAPID_API_KEY", "TEST");
+        environmentVariables.set("RAPID_API_HOST", "TEST");
+        environmentVariables.set("BASE_API_URL", baseUrl);
         String currentSeasonResponse = Files.readString(Path.of("src/test/resources/files/failure-get-seasons-response.json"));
         MockResponse mockCurrentSeasonResponse = new MockResponse()
                 .setResponseCode(200)
@@ -89,15 +93,16 @@ class MatchApiServiceTest {
         mockWebServer.enqueue(mockGetMatchesResponse);
         MatchApiService matchApiService = new MatchApiService(okHttpClient, objectMapper);
         //when, then
-        assertThrows(NoSuchElementException.class, () -> matchApiService.getMatchesFromApi(baseUrl));
+        assertThrows(NoSuchElementException.class, matchApiService::getMatchesFromApi);
         assertEquals(1, mockWebServer.getRequestCount());
     }
 
     @Test
     void shouldThrowNoSuchElementException_WhenNoRapidApiKeyVariablePresent() {
         //given
+        environmentVariables.set("BASE_API_URL", baseUrl);
         MatchApiService matchApiService = new MatchApiService(okHttpClient, objectMapper);
         //when, then
-        assertThrows(NullPointerException.class, () -> matchApiService.getMatchesFromApi(baseUrl));
+        assertThrows(NullPointerException.class, matchApiService::getMatchesFromApi);
     }
 }

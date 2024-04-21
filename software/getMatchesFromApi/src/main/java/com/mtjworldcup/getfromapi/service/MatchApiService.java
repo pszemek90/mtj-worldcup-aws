@@ -1,9 +1,9 @@
 package com.mtjworldcup.getfromapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtjworldcup.common.exception.HttpClientException;
 import com.mtjworldcup.common.model.MatchApiResponse;
 import com.mtjworldcup.common.model.MatchDto;
-import com.mtjworldcup.getfromapi.exception.HttpClientException;
 import com.mtjworldcup.getfromapi.model.*;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 public class MatchApiService {
 
     private static final Logger log = LoggerFactory.getLogger(MatchApiService.class);
-    private static final String RAPID_API_HOST = "api-football-v1.p.rapidapi.com";
     private static final int PREMIER_LEAGUE_ID = 39;
 
     private final OkHttpClient okHttpClient;
@@ -36,18 +35,19 @@ public class MatchApiService {
         this.objectMapper = objectMapper;
     }
 
-    public List<MatchDto> getMatchesFromApi(String baseUrl) {
+    public List<MatchDto> getMatchesFromApi() {
         final String rapidApiKey = System.getenv("RAPID_API_KEY");
-        LocalDate now = LocalDate.now();
+        final String rapidApiHost = System.getenv("RAPID_API_HOST");
+        final String baseUrl = System.getenv("BASE_API_URL");
         Request currentSeasonRequest = new Request.Builder()
                 .url(String.format("%s/leagues?id=%d&current=true", baseUrl, PREMIER_LEAGUE_ID))
                 .get()
                 .addHeader("X-RapidAPI-Key", rapidApiKey)
-                .addHeader("X-RapidAPI-Host", RAPID_API_HOST)
+                .addHeader("X-RapidAPI-Host", rapidApiHost)
                 .build();
         int currentSeason;
         try (Response response = okHttpClient.newCall(currentSeasonRequest).execute()) {
-            String currentSeasonResponseString = Optional.ofNullable(response)
+            String currentSeasonResponseString = Optional.of(response)
                     .map(Response::body)
                     .map(body -> {
                         try{
@@ -74,13 +74,14 @@ public class MatchApiService {
             throw new HttpClientException("Getting current season failed. Cause: " + e.getMessage());
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate now = LocalDate.now();
         String from = now.format(formatter);
         String to = now.plusDays(7).format(formatter);
         Request request = new Request.Builder()
                 .url(String.format("%s/fixtures?league=39&from=%s&to=%s&season=%d", baseUrl, from, to, currentSeason))
                 .get()
                 .addHeader("X-RapidAPI-Key", rapidApiKey)
-                .addHeader("X-RapidAPI-Host", RAPID_API_HOST)
+                .addHeader("X-RapidAPI-Host", rapidApiHost)
                 .build();
 
         try (Response response = okHttpClient.newCall(request).execute()) {

@@ -18,7 +18,6 @@ import java.util.List;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final String BASE_API_URL = "https://api-football-v1.p.rapidapi.com/v3";
     private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
     private final MatchesDao matchesDao;
@@ -31,7 +30,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         log.info("Fetching matches from api.");
         MatchApiService matchService = new MatchApiService(new OkHttpClient(), new ObjectMapper());
-        List<MatchDto> matchesFromApi = matchService.getMatchesFromApi(BASE_API_URL);
+        List<MatchDto> matchesFromApi = matchService.getMatchesFromApi();
         log.info("Matches from api: {}", matchesFromApi);
         List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
         log.info("Entities for persist: {}", entitiesToPersist);
