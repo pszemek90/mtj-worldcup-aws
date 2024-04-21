@@ -32,7 +32,7 @@ class HandlerTest {
     private final MatchStateService matchStateService = mock(MatchStateService.class);
 
     @Captor
-    private ArgumentCaptor<List<Match>> matchCaptor;
+    private ArgumentCaptor<Match> matchCaptor;
     private AutoCloseable closeable;
 
     @BeforeEach
@@ -63,7 +63,7 @@ class HandlerTest {
 
         // then
         verify(mockMatchesDao).update(matchCaptor.capture());
-        assertEquals(MatchStatus.SCHEDULED, matchCaptor.getValue().get(0).getMatchStatus());
+        assertEquals(MatchStatus.SCHEDULED, matchCaptor.getValue().getMatchStatus());
     }
 
     @Test
@@ -84,11 +84,11 @@ class HandlerTest {
 
         // then
         verify(mockMatchesDao).update(matchCaptor.capture());
-        assertEquals(MatchStatus.FINISHED, matchCaptor.getValue().get(0).getMatchStatus());
+        assertEquals(MatchStatus.FINISHED, matchCaptor.getValue().getMatchStatus());
     }
 
     @Test
-    void shouldNotThrowException_WhenMatchStateServiceFails() throws Exception {
+    void shouldNotThrowException_WhenMatchStateServiceFails() {
         // given
         Match match = new Match();
         match.setMatchStatus(MatchStatus.SCHEDULED);

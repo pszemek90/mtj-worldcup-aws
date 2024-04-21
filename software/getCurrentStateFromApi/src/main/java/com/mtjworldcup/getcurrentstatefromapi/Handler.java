@@ -10,6 +10,7 @@ import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.getcurrentstatefromapi.service.MatchStateService;
+import org.slf4j.Logger;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -21,8 +22,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mtjworldcup.common.util.Utils.safeGet;
+import static org.slf4j.LoggerFactory.*;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
+    private static final Logger log = getLogger(Handler.class);
 
     private final MatchesDao matchesDao;
     private final MatchStateService matchStateService;
@@ -46,11 +50,13 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .filter(Objects::nonNull)
                     .filter(match -> match.getMatchStatus() != MatchStatus.FINISHED)
                     .toList();
+            log.info("Unfinished matches: {}", unfinishedMatches);
             List<String> matchIds = unfinishedMatches.stream()
                     .map(Match::getPrimaryId)
                     .filter(Objects::nonNull)
                     .toList();
             MatchApiResponse apiMatches = matchStateService.getCurrentState(matchIds);
+            log.info("Current state api response: {}", apiMatches);
             Map<Long, MatchDto> matchesFromApi = Optional.ofNullable(apiMatches)
                     .map(MatchApiResponse::getResponse)
                     .map(dtos -> dtos.stream()
@@ -63,15 +69,17 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .orElse(Collections.emptyMap());
             unfinishedMatches.forEach(match -> {
                 MatchDto matchFromApi = matchesFromApi.get(Long.parseLong(match.getPrimaryId()));
+                if(matchFromApi == null) {
+                    return;
+                }
                 match.setHomeScore(safeGet(() -> matchFromApi.getGoals().getHome(), null));
                 match.setAwayScore(safeGet(() -> matchFromApi.getGoals().getAway(), null));
                 match.setMatchStatus(MatchStatus.fromShortName(
                         safeGet(() -> matchFromApi.getFixture().getStatus().getShortName(), "NS")));
+                matchesDao.update(match);
             });
-            matchesDao.update(unfinishedMatches);
             return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(200)
-                    .withBody("Updated " + unfinishedMatches.size() + " matches");
+                    .withStatusCode(200);
         } catch (Exception e) {
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(500)
