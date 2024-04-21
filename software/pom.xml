@@ -21,6 +21,7 @@
         <module>getOverallPool</module>
         <module>getUserProfile</module>
         <module>getTypersRank</module>
+        <module>getCurrentStateFromApi</module>
     </modules>
 
     <properties>
