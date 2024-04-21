@@ -6,6 +6,8 @@ import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigateway.MethodOptions;
 import software.amazon.awscdk.services.apigateway.RestApi;
 import software.amazon.awscdk.services.dynamodb.TableV2;
+import software.amazon.awscdk.services.events.CronOptions;
+import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.LayerVersion;
 import software.amazon.awscdk.services.ssm.StringParameter;
@@ -49,6 +51,9 @@ public class InfrastructureStack extends Stack {
         Function getUserProfile = Lambda.createLambda(this, "getUserProfile", "getuserprofile",
                 dynamoDbLayer, worldcupCommonLayer, cognitoLayer);
 
+        Function getCurrentStateFromApi = Lambda.createLambda(this, "getCurrentStateFromApi", "getcurrentstatefromapi",
+                dynamoDbLayer, worldcupCommonLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -59,9 +64,14 @@ public class InfrastructureStack extends Stack {
         String matchesTableName = "MATCHES_TABLE_NAME";
         String jwksUrl = "JWKS_URL";
         String userPoolId = "USER_POOL_ID";
+        String rapidApiKey = "RAPID_API_KEY";
+        String rapidApiHost = "RAPID_API_HOST";
+        String baseUrl = "BASE_API_URL";
 
         getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
-        getMatchesFromApi.addEnvironment("RAPID_API_KEY", StringParameter.valueForStringParameter(this, "RAPID_API_KEY"));
+        getMatchesFromApi.addEnvironment(rapidApiKey, StringParameter.valueForStringParameter(this, rapidApiKey));
+        getMatchesFromApi.addEnvironment(rapidApiHost, StringParameter.valueForStringParameter(this, rapidApiHost));
+        getMatchesFromApi.addEnvironment(baseUrl, StringParameter.valueForStringParameter(this, baseUrl));
 
         getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
 
@@ -83,7 +93,20 @@ public class InfrastructureStack extends Stack {
         getUserProfile.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
         getUserProfile.addEnvironment(matchesTableName, matchesTable.getTableName());
 
-        EventBridgeRule.createRule(this, getMatchesFromApi);
+        getCurrentStateFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
+        getCurrentStateFromApi.addEnvironment(rapidApiKey, StringParameter.valueForStringParameter(this, rapidApiKey));
+        getCurrentStateFromApi.addEnvironment(rapidApiHost, StringParameter.valueForStringParameter(this, rapidApiHost));
+        getCurrentStateFromApi.addEnvironment(baseUrl, StringParameter.valueForStringParameter(this, baseUrl));
+
+        Schedule onceADay = Schedule.cron(CronOptions.builder()
+                .hour("0")
+                .minute("30")
+                .build());
+        EventBridgeRule.createRule(this, getMatchesFromApi, onceADay);
+        Schedule everyHour = Schedule.cron(CronOptions.builder()
+                .minute("15")
+                .build());
+        EventBridgeRule.createRule(this, getCurrentStateFromApi, everyHour);
 
         RestApi api = ApiGateway.createRestApi(this);
         api.getRoot()
