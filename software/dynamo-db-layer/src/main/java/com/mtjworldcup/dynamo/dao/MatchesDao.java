@@ -207,11 +207,15 @@ public class MatchesDao {
                 .build());
     }
 
-    public void update(Match entity) {
+    public void update(List<Match> entities) {
         DynamoDbTable<Match> matchTable = getMatchTable();
-        matchTable.updateItem(UpdateItemEnhancedRequest.builder(Match.class)
-                .item(entity)
-                .build());
+        entities.forEach(entity -> {
+            try {
+                matchTable.updateItem(builder -> builder.item(entity));
+            } catch (Exception e) {
+                log.warn("Entity was not updated correctly. Entity: {}. Cause: {}", entity, e.getMessage());
+            }
+        });
     }
 
     private DynamoDbTable<Match> getMatchTable() {
