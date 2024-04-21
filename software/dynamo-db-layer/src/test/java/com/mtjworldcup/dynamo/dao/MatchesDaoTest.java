@@ -395,7 +395,7 @@ class MatchesDaoTest {
         matches.putItem(match);
         match.setMatchStatus(MatchStatus.FINISHED);
         // when
-        matchesDao.update(List.of(match));
+        matchesDao.update(match);
         // then
         Match matchFromDb = matchesDao.getById(match.getPrimaryId());
         assertEquals(MatchStatus.FINISHED, matchFromDb.getMatchStatus());
