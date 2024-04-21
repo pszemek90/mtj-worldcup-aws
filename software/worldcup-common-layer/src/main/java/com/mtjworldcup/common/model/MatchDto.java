@@ -1,6 +1,7 @@
 package com.mtjworldcup.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -37,6 +38,7 @@ public class MatchDto {
     public static class Fixture {
         private Long id;
         private Long timestamp;
+        private Status status;
 
         public Long getId() {
             return id;
@@ -54,12 +56,35 @@ public class MatchDto {
             this.timestamp = timestamp;
         }
 
+        public Status getStatus() {
+            return status;
+        }
+
+        public void setStatus(Status status) {
+            this.status = status;
+        }
+
         @Override
         public String toString() {
             return "Fixture{" +
                     "id=" + id +
                     ", timestamp=" + timestamp +
+                    ", status=" + status +
                     '}';
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Status {
+        @JsonProperty("short")
+        private String shortName;
+
+        public void setShortName(String shortName) {
+            this.shortName = shortName;
+        }
+
+        public String getShortName() {
+            return shortName;
         }
     }
 
