@@ -11,8 +11,8 @@ import java.util.List;
 public class EventBridgeRule {
     private EventBridgeRule(){}
 
-    public static Rule createRule(Construct scope, IFunction handler, Schedule schedule) {
-        return Rule.Builder.create(scope, "getMatchesCron")
+    public static Rule createRule(Construct scope, IFunction handler, Schedule schedule, String name) {
+        return Rule.Builder.create(scope, name)
                 .schedule(schedule)
                 .targets(List.of(LambdaFunction.Builder.create(handler).build()))
                 .build();

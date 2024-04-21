@@ -60,6 +60,11 @@ public class InfrastructureStack extends Stack {
         matchesTable.grantReadData(getMatchesByDate);
         matchesTable.grantReadWriteData(postTypes);
         matchesTable.grantReadData(getResults);
+        matchesTable.grantReadData(getMyTypings);
+        matchesTable.grantReadData(getAllTypings);
+        matchesTable.grantReadData(getOverallPool);
+        matchesTable.grantReadData(getUserProfile);
+        matchesTable.grantReadWriteData(getCurrentStateFromApi);
 
         String matchesTableName = "MATCHES_TABLE_NAME";
         String jwksUrl = "JWKS_URL";
@@ -102,11 +107,11 @@ public class InfrastructureStack extends Stack {
                 .hour("0")
                 .minute("30")
                 .build());
-        EventBridgeRule.createRule(this, getMatchesFromApi, onceADay);
+        EventBridgeRule.createRule(this, getMatchesFromApi, onceADay, "getMatchesCron");
         Schedule everyHour = Schedule.cron(CronOptions.builder()
                 .minute("15")
                 .build());
-        EventBridgeRule.createRule(this, getCurrentStateFromApi, everyHour);
+        EventBridgeRule.createRule(this, getCurrentStateFromApi, everyHour, "getCurrentStateCron");
 
         RestApi api = ApiGateway.createRestApi(this);
         api.getRoot()
