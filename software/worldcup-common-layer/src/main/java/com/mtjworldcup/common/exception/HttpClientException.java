@@ -1,4 +1,4 @@
-package com.mtjworldcup.getfromapi.exception;
+package com.mtjworldcup.common.exception;
 
 public class HttpClientException extends RuntimeException {
 
