@@ -4,6 +4,8 @@ import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -17,7 +19,7 @@ class HandlerTest {
     void shouldReturn100_WhenOverallPoolIs100() {
         // Given
         Handler handler = new Handler(mockMatchesDao);
-        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(100));
+        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(new BigDecimal(100)));
         // When
         var response = handler.handleRequest(null, null);
         // Then
@@ -30,7 +32,7 @@ class HandlerTest {
     void shouldReturn200_WhenOverallPoolIs200() {
         // Given
         Handler handler = new Handler(mockMatchesDao);
-        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(200));
+        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(new BigDecimal(200)));
         // When
         var response = handler.handleRequest(null, null);
         // Then
@@ -51,7 +53,7 @@ class HandlerTest {
         assertEquals(404, response.getStatusCode());
     }
 
-    private Match prepareOverallPool(int overallPool) {
+    private Match prepareOverallPool(BigDecimal overallPool) {
         Match match = new Match();
         match.setPool(overallPool);
         return match;

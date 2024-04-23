@@ -12,11 +12,13 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
@@ -73,17 +75,24 @@ public class MatchesDao {
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
                                 .partitionValue(matchDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                 .build()))
-                        .filterExpression(Expression.builder()
-                                .expression("#recordType = :recordType")
-                                .putExpressionName("#recordType", "record_type")
-                                .putExpressionValue(":recordType", AttributeValue.builder()
-                                        .s(RecordType.MATCH.name())
-                                        .build())
-                                .build())
+                        .filterExpression(filterByType(RecordType.MATCH))
                         .build())
                 .stream()
                 .flatMap(page -> page.items().stream())
                 .toList();
+    }
+
+    public Optional<Match> getTodayPool() {
+        DynamoDbTable<Match> matchTable = getMatchTable();
+        return matchTable.index(GET_BY_DATE_INDEX).query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                .build()))
+                        .filterExpression(filterByType(RecordType.POOL))
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst();
     }
 
     public Match getById(String id) {
@@ -128,11 +137,11 @@ public class MatchesDao {
                 Match match = getById(typing.getPrimaryId());
                 if (match == null)
                     throw new NoSuchElementException("Match not found for id: " + typing.getPrimaryId());
-                match.setPool(match.getPool() + 1);
+                match.setPool(match.getPool().add(BigDecimal.ONE));
                 Match user = getById(typing.getSecondaryId());
                 if (user == null)
                     throw new NoSuchElementException("User not found for id: " + typing.getSecondaryId());
-                user.setPool(user.getPool() - 1);
+                user.setPool(user.getPool().subtract(BigDecimal.ONE));
                 var putTypingRequest = TransactPutItemEnhancedRequest.builder(Match.class)
                         .item(typing)
                         .build();
@@ -163,20 +172,7 @@ public class MatchesDao {
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
                                 .partitionValue(userId)
                                 .build()))
-                        .attributesToProject(List.of(
-                                "date",
-                                "home_team",
-                                "away_team",
-                                "home_score",
-                                "away_score",
-                                "typing_status"))
-                        .filterExpression(Expression.builder()
-                                .expression("#recordType = :recordType")
-                                .putExpressionName("#recordType", "record_type")
-                                .putExpressionValue(":recordType", AttributeValue.builder()
-                                        .s(RecordType.TYPING.name())
-                                        .build())
-                                .build())
+                        .filterExpression(filterByType(RecordType.TYPING))
                         .build())
                 .stream()
                 .flatMap(page -> page.items().stream())
@@ -215,6 +211,16 @@ public class MatchesDao {
         } catch (Exception e) {
             log.warn("Entity was not updated correctly. Entity: {}. Cause: {}", entity, e.getMessage());
         }
+    }
+
+    private Expression filterByType(RecordType recordType) {
+        return Expression.builder()
+                .expression("#recordType = :recordType")
+                .putExpressionName("#recordType", "record_type")
+                .putExpressionValue(":recordType", AttributeValue.builder()
+                        .s(recordType.name())
+                        .build())
+                .build();
     }
 
     private DynamoDbTable<Match> getMatchTable() {

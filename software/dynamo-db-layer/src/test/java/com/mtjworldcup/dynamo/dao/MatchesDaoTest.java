@@ -28,6 +28,8 @@ import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -188,7 +190,7 @@ class MatchesDaoTest {
         user123.setPrimaryId(user123Id);
         user123.setSecondaryId(user123Id);
         user123.setRecordType(RecordType.USER);
-        user123.setPool(50);
+        user123.setPool(new BigDecimal(50, new MathContext(2)));
         matches.putItem(user123);
         matches.putItem(match);
         matches.putItem(match2);
@@ -210,9 +212,9 @@ class MatchesDaoTest {
         assertEquals(2, typings.size());
         assertEquals(2, matches.size());
         assertEquals(1, users.size());
-        assertEquals(48, users.get(0).getPool());
-        assertEquals(1, matches.get(0).getPool());
-        assertEquals(1, matches.get(1).getPool());
+        assertEquals(48, users.get(0).getPool().intValue());
+        assertEquals(1, matches.get(0).getPool().intValue());
+        assertEquals(1, matches.get(1).getPool().intValue());
     }
 
     @Test
@@ -227,7 +229,7 @@ class MatchesDaoTest {
         user123.setPrimaryId(user123Id);
         user123.setSecondaryId(user123Id);
         user123.setRecordType(RecordType.USER);
-        user123.setPool(50);
+        user123.setPool(new BigDecimal(50));
         matches.putItem(user123);
         matches.putItem(match);
         Match typing1 = prepareEntity();
@@ -252,8 +254,8 @@ class MatchesDaoTest {
         assertEquals(1, typings.size());
         assertEquals(2, typings.get(0).getHomeScore());
         assertEquals(2, typings.get(0).getAwayScore());
-        assertEquals(49, users.get(0).getPool());
-        assertEquals(1, matches.get(0).getPool());
+        assertEquals(49, users.get(0).getPool().intValue());
+        assertEquals(1, matches.get(0).getPool().intValue());
     }
 
     @Test
@@ -363,13 +365,13 @@ class MatchesDaoTest {
         Match overallPool = prepareEntity();
         overallPool.setPrimaryId("overall_pool");
         overallPool.setSecondaryId("overall_pool");
-        overallPool.setPool(100);
+        overallPool.setPool(new BigDecimal(100));
         overallPool.setRecordType(RecordType.POOL);
         matches.putItem(overallPool);
         //when
         Match overallPoolFromDb = matchesDao.getOverallPool();
         //then
-        assertEquals(100, overallPoolFromDb.getPool());
+        assertEquals(100, overallPoolFromDb.getPool().intValue());
     }
 
     @Test
@@ -378,13 +380,13 @@ class MatchesDaoTest {
         Match overallPool = prepareEntity();
         overallPool.setPrimaryId("overall_pool");
         overallPool.setSecondaryId("overall_pool");
-        overallPool.setPool(200);
+        overallPool.setPool(new BigDecimal(200));
         overallPool.setRecordType(RecordType.POOL);
         matches.putItem(overallPool);
         //when
         Match overallPoolFromDb = matchesDao.getOverallPool();
         //then
-        assertEquals(200, overallPoolFromDb.getPool());
+        assertEquals(200, overallPoolFromDb.getPool().intValue());
     }
 
     @Test
@@ -416,7 +418,7 @@ class MatchesDaoTest {
         match.setHomeTeam("team" + (1 + 2));
         match.setRecordType(RecordType.MATCH);
         match.setMatchStatus(MatchStatus.SCHEDULED);
-        match.setPool(0);
+        match.setPool(new BigDecimal(0));
         match.setCorrectTypings(0);
         return match;
     }

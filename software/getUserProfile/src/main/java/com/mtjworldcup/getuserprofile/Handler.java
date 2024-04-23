@@ -11,6 +11,7 @@ import com.mtjworldcup.dynamo.model.Match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         try {
             String userId = cognitoJwtVerifierService.checkUser(bearerToken);
             Match user = matchesDao.getById(userId);
-            Integer userBalance = Optional.ofNullable(user)
+            BigDecimal userBalance = Optional.ofNullable(user)
                     .map(Match::getPool)
                     .orElseThrow(() -> new NoSuchElementException("User pool not found for user id: " + userId));
             return new APIGatewayProxyResponseEvent()

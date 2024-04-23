@@ -5,6 +5,8 @@ import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.RecordType;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
@@ -27,7 +29,7 @@ public class MatchMapper {
         match.setAwayTeam(dto.getTeams().getAway().getName());
         match.setRecordType(RecordType.MATCH);
         match.setMatchStatus(MatchStatus.SCHEDULED);
-        match.setPool(0);
+        match.setPool(new BigDecimal(0, new MathContext(2)));
         return match;
     }
 

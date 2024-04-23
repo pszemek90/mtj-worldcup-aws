@@ -3,6 +3,7 @@ package com.mtjworldcup.dynamo.model;
 import com.mtjworldcup.common.model.TypingStatus;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -20,7 +21,7 @@ public class Match {
     private TypingStatus typingStatus;
     private MatchStatus matchStatus;
     private RecordType recordType;
-    private Integer pool;
+    private BigDecimal pool;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -136,11 +137,11 @@ public class Match {
         this.recordType = recordType;
     }
 
-    public Integer getPool() {
+    public BigDecimal getPool() {
         return pool;
     }
 
-    public void setPool(Integer pool) {
+    public void setPool(BigDecimal pool) {
         this.pool = pool;
     }
 

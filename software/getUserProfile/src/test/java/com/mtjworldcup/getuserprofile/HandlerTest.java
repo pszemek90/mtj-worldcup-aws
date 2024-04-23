@@ -7,6 +7,7 @@ import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +25,7 @@ class HandlerTest {
         Handler handler = new Handler(cognitoJwtVerifierService, matchesDao);
         when(cognitoJwtVerifierService.checkUser("testToken")).thenReturn("testUserId");
         Match user = new Match();
-        user.setPool(100);
+        user.setPool(new BigDecimal(100));
         when(matchesDao.getById("testUserId")).thenReturn(user);
         //when
         var response = handler.handleRequest(
@@ -33,7 +34,7 @@ class HandlerTest {
                 null);
         //then
         String userBalance = response.getBody();
-        assertEquals(100, Integer.parseInt(userBalance));
+        assertEquals(100, new BigDecimal(userBalance).intValue());
         assertEquals(200, response.getStatusCode());
     }
 
@@ -43,7 +44,7 @@ class HandlerTest {
         Handler handler = new Handler(cognitoJwtVerifierService, matchesDao);
         when(cognitoJwtVerifierService.checkUser("testToken")).thenReturn("testUserId");
         Match user = new Match();
-        user.setPool(200);
+        user.setPool(new BigDecimal(200));
         when(matchesDao.getById("testUserId")).thenReturn(user);
         //when
         var response = handler.handleRequest(
@@ -52,7 +53,7 @@ class HandlerTest {
                 null);
         //then
         String userBalance = response.getBody();
-        assertEquals(200, Integer.parseInt(userBalance));
+        assertEquals(200, new BigDecimal(userBalance).intValue());
         assertEquals(200, response.getStatusCode());
     }
 

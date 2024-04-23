@@ -8,6 +8,7 @@ import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
 import org.slf4j.Logger;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -28,7 +29,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
             Match overallPoolRecord = matchesDao.getOverallPool();
-            int overallPool = overallPoolRecord.getPool();
+            BigDecimal overallPool = overallPoolRecord.getPool();
             return new APIGatewayProxyResponseEvent()
                     .withBody(String.valueOf(overallPool))
                     .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
