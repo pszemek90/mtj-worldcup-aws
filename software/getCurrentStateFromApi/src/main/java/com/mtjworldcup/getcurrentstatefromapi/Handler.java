@@ -55,6 +55,11 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .map(Match::getPrimaryId)
                     .filter(Objects::nonNull)
                     .toList();
+            if (matchIds.isEmpty()) {
+                log.info("No matches to update");
+                return new APIGatewayProxyResponseEvent()
+                        .withStatusCode(200);
+            }
             MatchApiResponse apiMatches = matchStateService.getCurrentState(matchIds);
             log.info("Current state api response: {}", apiMatches);
             Map<Long, MatchDto> matchesFromApi = Optional.ofNullable(apiMatches)
@@ -69,7 +74,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .orElse(Collections.emptyMap());
             unfinishedMatches.forEach(match -> {
                 MatchDto matchFromApi = matchesFromApi.get(Long.parseLong(match.getPrimaryId()));
-                if(matchFromApi == null) {
+                if (matchFromApi == null) {
                     return;
                 }
                 match.setHomeScore(safeGet(() -> matchFromApi.getGoals().getHome(), null));
