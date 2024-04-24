@@ -54,6 +54,9 @@ public class InfrastructureStack extends Stack {
         Function getCurrentStateFromApi = Lambda.createLambda(this, "getCurrentStateFromApi", "getcurrentstatefromapi",
                 dynamoDbLayer, worldcupCommonLayer);
 
+        Function dividePool = Lambda.createLambda(this, "dividePool", "dividepool",
+                dynamoDbLayer, worldcupCommonLayer);
+
         TableV2 matchesTable = DynamoDb.createTable(this);
 
         matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -65,6 +68,7 @@ public class InfrastructureStack extends Stack {
         matchesTable.grantReadData(getOverallPool);
         matchesTable.grantReadData(getUserProfile);
         matchesTable.grantReadWriteData(getCurrentStateFromApi);
+        matchesTable.grantReadWriteData(dividePool);
 
         String matchesTableName = "MATCHES_TABLE_NAME";
         String jwksUrl = "JWKS_URL";
@@ -103,15 +107,24 @@ public class InfrastructureStack extends Stack {
         getCurrentStateFromApi.addEnvironment(rapidApiHost, StringParameter.valueForStringParameter(this, rapidApiHost));
         getCurrentStateFromApi.addEnvironment(baseUrl, StringParameter.valueForStringParameter(this, baseUrl));
 
+        dividePool.addEnvironment(matchesTableName, matchesTable.getTableName());
+
         Schedule onceADay = Schedule.cron(CronOptions.builder()
                 .hour("0")
                 .minute("30")
                 .build());
         EventBridgeRule.createRule(this, getMatchesFromApi, onceADay, "getMatchesCron");
+
         Schedule everyHour = Schedule.cron(CronOptions.builder()
                 .minute("15")
                 .build());
         EventBridgeRule.createRule(this, getCurrentStateFromApi, everyHour, "getCurrentStateCron");
+
+        onceADay = Schedule.cron(CronOptions.builder()
+                .hour("0")
+                .minute("45")
+                .build());
+        EventBridgeRule.createRule(this, dividePool, onceADay, "dividePoolCron");
 
         RestApi api = ApiGateway.createRestApi(this);
         api.getRoot()
