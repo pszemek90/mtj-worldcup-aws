@@ -82,11 +82,11 @@ public class MatchesDao {
                 .toList();
     }
 
-    public Optional<Match> getTodayPool() {
+    public Optional<Match> getPool(LocalDate poolDate) {
         DynamoDbTable<Match> matchTable = getMatchTable();
         return matchTable.index(GET_BY_DATE_INDEX).query(QueryEnhancedRequest.builder()
                         .queryConditional(QueryConditional.keyEqualTo(Key.builder()
-                                .partitionValue(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                .partitionValue(poolDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                 .build()))
                         .filterExpression(filterByType(RecordType.POOL))
                         .build())
