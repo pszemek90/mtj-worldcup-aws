@@ -22,6 +22,7 @@
         <module>getUserProfile</module>
         <module>getTypersRank</module>
         <module>getCurrentStateFromApi</module>
+        <module>dividePool</module>
     </modules>
 
     <properties>
