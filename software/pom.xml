@@ -23,6 +23,7 @@
         <module>getTypersRank</module>
         <module>getCurrentStateFromApi</module>
         <module>dividePool</module>
+        <module>handleFinishedMatch</module>
     </modules>
 
     <properties>
