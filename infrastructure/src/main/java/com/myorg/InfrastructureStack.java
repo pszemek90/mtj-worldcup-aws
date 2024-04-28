@@ -7,6 +7,8 @@ import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigateway.MethodOptions;
 import software.amazon.awscdk.services.apigateway.RestApi;
+import software.amazon.awscdk.services.cognito.IUserPool;
+import software.amazon.awscdk.services.cognito.UserPool;
 import software.amazon.awscdk.services.dynamodb.TableV2;
 import software.amazon.awscdk.services.events.CronOptions;
 import software.amazon.awscdk.services.events.Schedule;
@@ -97,50 +99,55 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantReadWriteData(handleFinishedMatch);
     matchesTable.grantStreamRead(handleFinishedMatch);
 
+    String userPoolId = "USER_POOL_ID";
+    String userPoolIdFromSsm = StringParameter.valueForStringParameter(this, userPoolId);
+
+    IUserPool worldcupUserPool =
+        UserPool.fromUserPoolId(this, "worldcup-user-pool", userPoolIdFromSsm);
+    String adminGetUser = "cognito-idp:AdminGetUser";
+    worldcupUserPool.grant(postTypes, adminGetUser);
+    worldcupUserPool.grant(getMyTypings, adminGetUser);
+    worldcupUserPool.grant(getUserProfile, adminGetUser);
+
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
-    String userPoolId = "USER_POOL_ID";
     String rapidApiKey = "RAPID_API_KEY";
     String rapidApiHost = "RAPID_API_HOST";
     String baseUrl = "BASE_API_URL";
+    String rapidApiKeyFromSsm = StringParameter.valueForStringParameter(this, rapidApiKey);
+    String rapiApiHostFromSsm = StringParameter.valueForStringParameter(this, rapidApiHost);
+    String jwksUrlFromSsm = StringParameter.valueForStringParameter(this, jwksUrl);
+    String baseMatchApiUrlFromSsm = StringParameter.valueForStringParameter(this, baseUrl);
 
     getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
-    getMatchesFromApi.addEnvironment(
-        rapidApiKey, StringParameter.valueForStringParameter(this, rapidApiKey));
-    getMatchesFromApi.addEnvironment(
-        rapidApiHost, StringParameter.valueForStringParameter(this, rapidApiHost));
-    getMatchesFromApi.addEnvironment(
-        baseUrl, StringParameter.valueForStringParameter(this, baseUrl));
+    getMatchesFromApi.addEnvironment(rapidApiKey, rapidApiKeyFromSsm);
+    getMatchesFromApi.addEnvironment(rapidApiHost, rapiApiHostFromSsm);
+    getMatchesFromApi.addEnvironment(baseUrl, baseMatchApiUrlFromSsm);
 
     getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     postTypes.addEnvironment(matchesTableName, matchesTable.getTableName());
-    postTypes.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
-    postTypes.addEnvironment(userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
+    postTypes.addEnvironment(jwksUrl, jwksUrlFromSsm);
+    postTypes.addEnvironment(userPoolId, userPoolIdFromSsm);
 
     getResults.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     getMyTypings.addEnvironment(matchesTableName, matchesTable.getTableName());
-    getMyTypings.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
-    getMyTypings.addEnvironment(
-        userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
+    getMyTypings.addEnvironment(jwksUrl, jwksUrlFromSsm);
+    getMyTypings.addEnvironment(userPoolId, userPoolIdFromSsm);
 
     getAllTypings.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     getOverallPool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
-    getUserProfile.addEnvironment(
-        userPoolId, StringParameter.valueForStringParameter(this, userPoolId));
-    getUserProfile.addEnvironment(jwksUrl, StringParameter.valueForStringParameter(this, jwksUrl));
+    getUserProfile.addEnvironment(userPoolId, userPoolIdFromSsm);
+    getUserProfile.addEnvironment(jwksUrl, jwksUrlFromSsm);
     getUserProfile.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     getCurrentStateFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
-    getCurrentStateFromApi.addEnvironment(
-        rapidApiKey, StringParameter.valueForStringParameter(this, rapidApiKey));
-    getCurrentStateFromApi.addEnvironment(
-        rapidApiHost, StringParameter.valueForStringParameter(this, rapidApiHost));
-    getCurrentStateFromApi.addEnvironment(
-        baseUrl, StringParameter.valueForStringParameter(this, baseUrl));
+    getCurrentStateFromApi.addEnvironment(rapidApiKey, rapidApiKeyFromSsm);
+    getCurrentStateFromApi.addEnvironment(rapidApiHost, rapiApiHostFromSsm);
+    getCurrentStateFromApi.addEnvironment(baseUrl, baseMatchApiUrlFromSsm);
 
     dividePool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
@@ -171,7 +178,7 @@ public class InfrastructureStack extends Stack {
     onceADay = Schedule.cron(CronOptions.builder().hour("0").minute("45").build());
     EventBridgeRule.createRule(this, dividePool, onceADay, "dividePoolCron");
 
-    RestApi api = ApiGateway.createRestApi(this);
+    RestApi api = ApiGateway.createRestApi(this, worldcupUserPool);
     api.getRoot()
         .addResource("api")
         .addResource("results")
