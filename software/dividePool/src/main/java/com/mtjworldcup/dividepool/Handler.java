@@ -84,7 +84,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         pool.setDate(tomorrow);
         pool.setPool(BigDecimal.ZERO);
         pool.setPrimaryId("pool-" + tomorrow);
-        pool.setSecondaryId("pool" + tomorrow);
+        pool.setSecondaryId("pool-" + tomorrow);
         pool.setRecordType(RecordType.POOL);
         return pool;
     }
