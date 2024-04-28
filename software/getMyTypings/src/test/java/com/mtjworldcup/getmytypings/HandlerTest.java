@@ -61,7 +61,7 @@ class HandlerTest {
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
         String testUserId = "testUserId";
         when(cognitoJwtVerifierService.checkUser("testToken")).thenReturn(testUserId);
-        when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
+        when(matchesDao.getTypingsByUserId(testUserId)).thenReturn(List.of(prepareMatch()));
         //when
         var response = handler.handleRequest(request, null);
         //then
@@ -92,7 +92,7 @@ class HandlerTest {
         var request = new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", token));
         String testUserId = "testUserId";
         when(cognitoJwtVerifierService.checkUser(token)).thenReturn(testUserId);
-        when(matchesDao.getTypings(testUserId)).thenReturn(List.of(prepareMatch()));
+        when(matchesDao.getTypingsByUserId(testUserId)).thenReturn(List.of(prepareMatch()));
         when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("testJsonProcessingException") {
         });
         //when

@@ -44,7 +44,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             String bearerToken = authorizationHeader.substring("Bearer ".length());
             String userId = cognitoJwtVerifierService.checkUser(bearerToken);
             log.info("Getting typings for user: {}", userId);
-            List<Match> typingRecords = matchesDao.getTypings(userId);
+            List<Match> typingRecords = matchesDao.getTypingsByUserId(userId);
             var typings = TypingMapper.mapToDto(typingRecords);
             log.info("Typings found: {}, userId: {}", typings, userId);
             String body = objectMapper.writeValueAsString(typings);
