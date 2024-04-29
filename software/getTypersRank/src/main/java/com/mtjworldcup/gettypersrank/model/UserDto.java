@@ -1,6 +1,8 @@
 package com.mtjworldcup.gettypersrank.model;
 
-public record UserDto(String username, int correctTypings) implements Comparable<UserDto>{
+import java.math.BigDecimal;
+
+public record UserDto(String username, int correctTypings, BigDecimal balance) implements Comparable<UserDto>{
 
     @Override
     public int compareTo(UserDto userDto) {

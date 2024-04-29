@@ -73,7 +73,7 @@ class HandlerTest {
   void shouldReturnInternalServerError_WhenObjectMapperFails() throws Exception {
     // given
     when(mockMatchesDao.getUsers()).thenReturn(List.of(new Match()));
-    when(spyObjectMapper.writeValueAsString(List.of(new UserDto(null, 0))))
+    when(spyObjectMapper.writeValueAsString(List.of(new UserDto(null, 0, null))))
         .thenThrow(new JsonProcessingException("Object Mapper failed") {});
     // when
     APIGatewayProxyResponseEvent response = handler.handleRequest(null, null);

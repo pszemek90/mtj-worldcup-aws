@@ -9,7 +9,7 @@ public class UserMapper {
   private UserMapper() {}
 
   public static UserDto toUserDto(Match match) {
-    return new UserDto(match.getPrimaryId(), match.getCorrectTypings());
+    return new UserDto(match.getPrimaryId(), match.getCorrectTypings(), match.getPool());
   }
 
   public static List<UserDto> toUserDto(List<Match> matches) {
