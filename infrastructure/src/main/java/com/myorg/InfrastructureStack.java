@@ -84,6 +84,10 @@ public class InfrastructureStack extends Stack {
         Lambda.createLambda(
             this, "handleFinishedMatch", "handlefinishedmatch", dynamoDbLayer, worldcupCommonLayer);
 
+    Function getTypersRank =
+        Lambda.createLambda(
+            this, "getTypersRank", "gettypersrank", dynamoDbLayer, worldcupCommonLayer);
+
     TableV2 matchesTable = DynamoDb.createTable(this);
 
     matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -98,6 +102,7 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantReadWriteData(dividePool);
     matchesTable.grantReadWriteData(handleFinishedMatch);
     matchesTable.grantStreamRead(handleFinishedMatch);
+    matchesTable.grantReadData(getTypersRank);
 
     String userPoolId = "USER_POOL_ID";
     String userPoolIdFromSsm = StringParameter.valueForStringParameter(this, userPoolId);
@@ -153,6 +158,8 @@ public class InfrastructureStack extends Stack {
 
     handleFinishedMatch.addEnvironment(matchesTableName, matchesTable.getTableName());
 
+    getTypersRank.addEnvironment(matchesTableName, matchesTable.getTableName());
+
     handleFinishedMatch.addEventSource(
         DynamoEventSource.Builder.create(matchesTable)
             .startingPosition(StartingPosition.TRIM_HORIZON)
@@ -199,6 +206,10 @@ public class InfrastructureStack extends Stack {
         .getParentResource()
         .addResource("user-profile")
         .addMethod("GET", LambdaIntegration.Builder.create(getUserProfile).build())
+        .getResource()
+        .getParentResource()
+        .addResource("typers")
+        .addMethod("GET", LambdaIntegration.Builder.create(getTypersRank).build())
         .getResource()
         .getParentResource()
         .addResource("matches")
