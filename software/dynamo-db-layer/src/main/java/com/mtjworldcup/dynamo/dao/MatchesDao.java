@@ -218,18 +218,7 @@ public class MatchesDao {
   }
 
   public List<Match> getAllTypings() {
-    DynamoDbTable<Match> matchTable = getMatchTable();
-    return matchTable
-        .index(GET_BY_RECORD_TYPE_INDEX)
-        .query(
-            QueryEnhancedRequest.builder()
-                .queryConditional(
-                    QueryConditional.keyEqualTo(
-                        Key.builder().partitionValue(RecordType.TYPING.name()).build()))
-                .build())
-        .stream()
-        .flatMap(page -> page.items().stream())
-        .toList();
+    return getByType(RecordType.TYPING);
   }
 
   public Match getOverallPool() {
@@ -299,6 +288,24 @@ public class MatchesDao {
     transctionBuilder.addUpdateItem(matchTable, updateMatch);
     typingsUpdateRequests.forEach(typing -> transctionBuilder.addUpdateItem(matchTable, typing));
     enhancedClient.transactWriteItems(transctionBuilder.build());
+  }
+
+  public List<Match> getUsers() {
+    return getByType(RecordType.USER);
+  }
+
+  private List<Match> getByType(RecordType recordType) {
+    DynamoDbTable<Match> matchTable = getMatchTable();
+    return matchTable
+        .index(GET_BY_RECORD_TYPE_INDEX)
+        .query(
+            QueryEnhancedRequest.builder()
+                .queryConditional(
+                    QueryConditional.keyEqualTo(Key.builder().partitionValue(recordType.name()).build()))
+                .build())
+        .stream()
+        .flatMap(page -> page.items().stream())
+        .toList();
   }
 
   private Expression filterByType(RecordType recordType) {
