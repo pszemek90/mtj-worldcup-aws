@@ -17,7 +17,7 @@ public class Match {
     private String awayTeam;
     private Integer homeScore;
     private Integer awayScore;
-    private Integer correctTypings;
+    private int correctTypings;
     private TypingStatus typingStatus;
     private MatchStatus matchStatus;
     private RecordType recordType;
@@ -101,11 +101,11 @@ public class Match {
     }
 
     @DynamoDbAttribute("correct_typings")
-    public Integer getCorrectTypings() {
+    public int getCorrectTypings() {
         return correctTypings;
     }
 
-    public void setCorrectTypings(Integer correctTypings) {
+    public void setCorrectTypings(int correctTypings) {
         this.correctTypings = correctTypings;
     }
 
