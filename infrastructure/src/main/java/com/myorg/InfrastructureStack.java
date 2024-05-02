@@ -88,6 +88,15 @@ public class InfrastructureStack extends Stack {
         Lambda.createLambda(
             this, "getTypersRank", "gettypersrank", dynamoDbLayer, worldcupCommonLayer);
 
+    Function getUserHistory =
+        Lambda.createLambda(
+            this,
+            "getUserHistory",
+            "getuserhistory",
+            dynamoDbLayer,
+            worldcupCommonLayer,
+            cognitoLayer);
+
     TableV2 matchesTable = DynamoDb.createTable(this);
 
     matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -103,6 +112,7 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantReadWriteData(handleFinishedMatch);
     matchesTable.grantStreamRead(handleFinishedMatch);
     matchesTable.grantReadData(getTypersRank);
+    matchesTable.grantReadData(getUserHistory);
 
     String userPoolId = "USER_POOL_ID";
     String userPoolIdFromSsm = StringParameter.valueForStringParameter(this, userPoolId);
@@ -113,6 +123,7 @@ public class InfrastructureStack extends Stack {
     worldcupUserPool.grant(postTypes, adminGetUser);
     worldcupUserPool.grant(getMyTypings, adminGetUser);
     worldcupUserPool.grant(getUserProfile, adminGetUser);
+    worldcupUserPool.grant(getUserHistory, adminGetUser);
 
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
@@ -159,6 +170,10 @@ public class InfrastructureStack extends Stack {
     handleFinishedMatch.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     getTypersRank.addEnvironment(matchesTableName, matchesTable.getTableName());
+
+    getUserHistory.addEnvironment(matchesTableName, matchesTable.getTableName());
+    getUserHistory.addEnvironment(jwksUrl, jwksUrlFromSsm);
+    getUserHistory.addEnvironment(userPoolId, userPoolIdFromSsm);
 
     handleFinishedMatch.addEventSource(
         DynamoEventSource.Builder.create(matchesTable)
@@ -210,6 +225,10 @@ public class InfrastructureStack extends Stack {
         .getParentResource()
         .addResource("typers")
         .addMethod("GET", LambdaIntegration.Builder.create(getTypersRank).build())
+        .getResource()
+        .getParentResource()
+        .addResource("user-history")
+        .addMethod("GET", LambdaIntegration.Builder.create(getUserHistory).build())
         .getResource()
         .getParentResource()
         .addResource("matches")
