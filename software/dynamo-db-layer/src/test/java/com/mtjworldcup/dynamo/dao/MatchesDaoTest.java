@@ -493,6 +493,9 @@ class MatchesDaoTest {
         matchesDao.getByCombinedKey(match.getPrimaryId(), user2.getPrimaryId());
     Match user3CorrectTyping =
         matchesDao.getByCombinedKey(match.getPrimaryId(), user3.getPrimaryId());
+    List<Match> user1Messages = matchesDao.getMessagesByUserId(user1.getPrimaryId());
+    List<Match> user2Messages = matchesDao.getMessagesByUserId(user2.getPrimaryId());
+    List<Match> user3Messages = matchesDao.getMessagesByUserId(user3.getPrimaryId());
     assertEquals(BigDecimal.ZERO, matchFromDb.getPool());
     assertEquals(3, matchFromDb.getCorrectTypings());
     assertEquals(BigDecimal.valueOf(76.66), user1FromDb.getPool());
@@ -501,6 +504,12 @@ class MatchesDaoTest {
     assertEquals(TypingStatus.CORRECT, user1CorrectTyping.getTypingStatus());
     assertEquals(TypingStatus.CORRECT, user2CorrectTyping.getTypingStatus());
     assertEquals(TypingStatus.CORRECT, user3CorrectTyping.getTypingStatus());
+    assertEquals(1, user1Messages.size());
+    assertEquals(1, user2Messages.size());
+    assertEquals(1, user3Messages.size());
+    assertEquals(BigDecimal.valueOf(66.66), user1Messages.get(0).getPool());
+    assertEquals(BigDecimal.valueOf(66.66), user2Messages.get(0).getPool());
+    assertEquals(BigDecimal.valueOf(66.66), user3Messages.get(0).getPool());
   }
 
   @Test
@@ -556,6 +565,41 @@ class MatchesDaoTest {
     assertEquals(TypingStatus.INCORRECT, user1TypingFromDb.getTypingStatus());
     assertEquals(TypingStatus.INCORRECT, user2TypingFromDb.getTypingStatus());
     assertEquals(BigDecimal.valueOf(200), tomorrowPoolFromDb.getPool());
+  }
+
+  @Test
+  void shouldReturnOneMessage_WhenOneMessageForUserAvailable() {
+    // given
+    String userId = "user-123";
+    Match message = prepareEntity();
+    message.setPrimaryId(userId);
+    message.setSecondaryId("message-123");
+    message.setRecordType(RecordType.MESSAGE);
+    matches.putItem(message);
+    // when
+    List<Match> messages = matchesDao.getMessagesByUserId(userId);
+    // then
+    assertEquals(1, messages.size());
+  }
+
+  @Test
+  void shouldReturnOneMessage_WhenOneMessageForUserAndOneForDifferentUserAvailable() {
+    // given
+    String userId = "user-123";
+    Match message = prepareEntity();
+    message.setPrimaryId(userId);
+    message.setSecondaryId("message-123");
+    message.setRecordType(RecordType.MESSAGE);
+    matches.putItem(message);
+    Match message2 = prepareEntity();
+    message2.setPrimaryId("user-124");
+    message2.setSecondaryId("message-123");
+    message2.setRecordType(RecordType.MESSAGE);
+    matches.putItem(message2);
+    // when
+    List<Match> messages = matchesDao.getMessagesByUserId(userId);
+    // then
+    assertEquals(1, messages.size());
   }
 
   private Match prepareEntity() {

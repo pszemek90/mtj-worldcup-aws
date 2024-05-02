@@ -18,6 +18,7 @@ import java.math.RoundingMode;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -269,6 +270,26 @@ public class MatchesDao {
       BigDecimal poolPerUser = pool.divide(BigDecimal.valueOf(users.size()), 2, RoundingMode.DOWN);
       users.forEach(user -> user.setCorrectTypings(user.getCorrectTypings() + 1));
       users.forEach(user -> user.setPool(user.getPool().add(poolPerUser)));
+      List<Match> winMessages = new ArrayList<>();
+      users.forEach(
+          user -> {
+            Match message = new Match();
+            message.setPrimaryId(user.getPrimaryId());
+            message.setSecondaryId("message-" + finishedMatch.getPrimaryId());
+            message.setRecordType(RecordType.MESSAGE);
+            message.setDate(LocalDate.now());
+            message.setPool(poolPerUser);
+            message.setHomeTeam(finishedMatch.getHomeTeam());
+            message.setAwayTeam(finishedMatch.getAwayTeam());
+            winMessages.add(message);
+          });
+      var putMessagesRequests =
+          winMessages.stream()
+              .map(
+                  message ->
+                      TransactPutItemEnhancedRequest.builder(Match.class).item(message).build())
+              .toList();
+      putMessagesRequests.forEach(message -> transctionBuilder.addPutItem(matchTable, message));
       var userUpdateRequests =
           users.stream()
               .map(
@@ -294,6 +315,20 @@ public class MatchesDao {
     return getByType(RecordType.USER);
   }
 
+  public List<Match> getMessagesByUserId(String userId) {
+    DynamoDbTable<Match> matchTable = getMatchTable();
+    return matchTable
+        .query(
+            QueryEnhancedRequest.builder()
+                .queryConditional(
+                    QueryConditional.keyEqualTo(Key.builder().partitionValue(userId).build()))
+                .filterExpression(filterByType(RecordType.MESSAGE))
+                .build())
+        .stream()
+        .flatMap(page -> page.items().stream())
+        .toList();
+  }
+
   private List<Match> getByType(RecordType recordType) {
     DynamoDbTable<Match> matchTable = getMatchTable();
     return matchTable
@@ -301,7 +336,8 @@ public class MatchesDao {
         .query(
             QueryEnhancedRequest.builder()
                 .queryConditional(
-                    QueryConditional.keyEqualTo(Key.builder().partitionValue(recordType.name()).build()))
+                    QueryConditional.keyEqualTo(
+                        Key.builder().partitionValue(recordType.name()).build()))
                 .build())
         .stream()
         .flatMap(page -> page.items().stream())
