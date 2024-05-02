@@ -24,6 +24,7 @@
         <module>getCurrentStateFromApi</module>
         <module>dividePool</module>
         <module>handleFinishedMatch</module>
+        <module>getUserHistory</module>
     </modules>
 
     <properties>
