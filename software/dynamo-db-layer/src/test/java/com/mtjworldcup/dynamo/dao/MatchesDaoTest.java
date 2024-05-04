@@ -36,12 +36,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Random;
 
 import static java.time.Month.OCTOBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(SystemStubsExtension.class)
 @Testcontainers
@@ -391,33 +389,35 @@ class MatchesDaoTest {
   }
 
   @Test
-  void shouldReturn100OverallPool_When100InDb() {
+  void shouldReturn100TodayPool_When100InDb() {
     // given
-    Match overallPool = prepareEntity();
-    overallPool.setPrimaryId("overall_pool");
-    overallPool.setSecondaryId("overall_pool");
-    overallPool.setPool(new BigDecimal(100));
-    overallPool.setRecordType(RecordType.POOL);
-    matches.putItem(overallPool);
+    Match todayPool = prepareEntity();
+    todayPool.setPrimaryId("pool_today");
+    todayPool.setSecondaryId("pool_today");
+    todayPool.setPool(new BigDecimal(100));
+    todayPool.setRecordType(RecordType.POOL);
+    todayPool.setDate(LocalDate.now());
+    matches.putItem(todayPool);
     // when
-    Match overallPoolFromDb = matchesDao.getOverallPool();
+    Match todayPoolFromDb = matchesDao.getTodayPool();
     // then
-    assertEquals(100, overallPoolFromDb.getPool().intValue());
+    assertEquals(100, todayPoolFromDb.getPool().intValue());
   }
 
   @Test
-  void shouldReturn200OverallPool_When200InDb() {
+  void shouldReturn200TodayPool_When200InDb() {
     // given
-    Match overallPool = prepareEntity();
-    overallPool.setPrimaryId("overall_pool");
-    overallPool.setSecondaryId("overall_pool");
-    overallPool.setPool(new BigDecimal(200));
-    overallPool.setRecordType(RecordType.POOL);
-    matches.putItem(overallPool);
+    Match todayPool = prepareEntity();
+    todayPool.setPrimaryId("pool_today");
+    todayPool.setSecondaryId("pool_today");
+    todayPool.setPool(new BigDecimal(200));
+    todayPool.setRecordType(RecordType.POOL);
+    todayPool.setDate(LocalDate.now());
+    matches.putItem(todayPool);
     // when
-    Match overallPoolFromDb = matchesDao.getOverallPool();
+    Match todayPoolFromDb = matchesDao.getTodayPool();
     // then
-    assertEquals(200, overallPoolFromDb.getPool().intValue());
+    assertEquals(200, todayPoolFromDb.getPool().intValue());
   }
 
   @Test
