@@ -9,6 +9,7 @@ import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.getuserhistory.model.MessageDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -47,7 +49,7 @@ class HandlerTest {
     APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
     // then
     String responseBody = response.getBody();
-    List<Match> messages = OBJECT_MAPPER.readValue(responseBody, new TypeReference<>() {});
+    List<MessageDto> messages = OBJECT_MAPPER.readValue(responseBody, new TypeReference<>() {});
     assertEquals(1, messages.size());
   }
 
@@ -63,7 +65,7 @@ class HandlerTest {
     APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
     // then
     String responseBody = response.getBody();
-    List<Match> messages = OBJECT_MAPPER.readValue(responseBody, new TypeReference<>() {});
+    List<MessageDto> messages = OBJECT_MAPPER.readValue(responseBody, new TypeReference<>() {});
     assertEquals(2, messages.size());
   }
 
@@ -98,7 +100,7 @@ class HandlerTest {
     when(mockCognitoJwtVerifierService.checkUser("token")).thenReturn("testUserId");
     List<Match> userMessages = List.of(new Match());
     when(mockMatchesDao.getMessagesByUserId("testUserId")).thenReturn(userMessages);
-    when(spyObjectMapper.writeValueAsString(userMessages))
+    when(spyObjectMapper.writeValueAsString(any()))
         .thenThrow(new JsonProcessingException("Something went wrong!") {});
     APIGatewayProxyRequestEvent request =
         new APIGatewayProxyRequestEvent().withHeaders(Map.of("Authorization", "Bearer token"));

@@ -9,11 +9,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
-import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.getuserhistory.mapper.MessageMapper;
+import com.mtjworldcup.getuserhistory.model.MessageDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 public class Handler
     implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -30,7 +32,10 @@ public class Handler
     this.cognitoJwtVerifierService = new CognitoJwtVerifierService();
   }
 
-  public Handler(ObjectMapper objectMapper, MatchesDao matchesDao, CognitoJwtVerifierService cognitoJwtVerifierService) {
+  public Handler(
+      ObjectMapper objectMapper,
+      MatchesDao matchesDao,
+      CognitoJwtVerifierService cognitoJwtVerifierService) {
     this.objectMapper = objectMapper;
     this.matchesDao = matchesDao;
     this.cognitoJwtVerifierService = cognitoJwtVerifierService;
@@ -46,9 +51,12 @@ public class Handler
       }
       String userId =
           cognitoJwtVerifierService.checkUser(authorizationHeader.substring("Bearer ".length()));
-      List<Match> userMessages = matchesDao.getMessagesByUserId(userId);
+      List<MessageDto> userMessages = MessageMapper.mapToDto(matchesDao.getMessagesByUserId(userId));
       String responseBody = objectMapper.writeValueAsString(userMessages);
-      return new APIGatewayProxyResponseEvent().withBody(responseBody).withStatusCode(200);
+      return new APIGatewayProxyResponseEvent()
+          .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
+          .withBody(responseBody)
+          .withStatusCode(200);
     } catch (JsonProcessingException e) {
       log.warn("Failed to serialize message. Cause: {}", e.getMessage());
       return new APIGatewayProxyResponseEvent()
@@ -59,7 +67,9 @@ public class Handler
       return new APIGatewayProxyResponseEvent().withBody("Unauthorized").withStatusCode(401);
     } catch (Exception e) {
       log.error("Failed to process request. Cause: {}", e.getMessage());
-      return new APIGatewayProxyResponseEvent().withBody("Server error occurred!").withStatusCode(500);
+      return new APIGatewayProxyResponseEvent()
+          .withBody("Server error occurred!")
+          .withStatusCode(500);
     }
   }
 }
