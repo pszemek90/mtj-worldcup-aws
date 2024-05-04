@@ -56,9 +56,9 @@ public class InfrastructureStack extends Stack {
         Lambda.createLambda(
             this, "getAllTypings", "getalltypings", dynamoDbLayer, worldcupCommonLayer);
 
-    Function getOverallPool =
+    Function getTodayPool =
         Lambda.createLambda(
-            this, "getOverallPool", "getoverallpool", dynamoDbLayer, worldcupCommonLayer);
+            this, "getTodayPool", "gettodaypool", dynamoDbLayer, worldcupCommonLayer);
 
     Function getUserProfile =
         Lambda.createLambda(
@@ -105,7 +105,7 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantReadData(getResults);
     matchesTable.grantReadData(getMyTypings);
     matchesTable.grantReadData(getAllTypings);
-    matchesTable.grantReadData(getOverallPool);
+    matchesTable.grantReadData(getTodayPool);
     matchesTable.grantReadData(getUserProfile);
     matchesTable.grantReadWriteData(getCurrentStateFromApi);
     matchesTable.grantReadWriteData(dividePool);
@@ -154,7 +154,7 @@ public class InfrastructureStack extends Stack {
 
     getAllTypings.addEnvironment(matchesTableName, matchesTable.getTableName());
 
-    getOverallPool.addEnvironment(matchesTableName, matchesTable.getTableName());
+    getTodayPool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     getUserProfile.addEnvironment(userPoolId, userPoolIdFromSsm);
     getUserProfile.addEnvironment(jwksUrl, jwksUrlFromSsm);
@@ -215,8 +215,8 @@ public class InfrastructureStack extends Stack {
         .addMethod("GET", LambdaIntegration.Builder.create(getAllTypings).build())
         .getResource()
         .getParentResource()
-        .addResource("overall-pool")
-        .addMethod("GET", LambdaIntegration.Builder.create(getOverallPool).build())
+        .addResource("today-pool")
+        .addMethod("GET", LambdaIntegration.Builder.create(getTodayPool).build())
         .getResource()
         .getParentResource()
         .addResource("user-profile")
