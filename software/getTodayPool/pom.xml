@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>com.mtjworldcup</groupId>
-    <artifactId>getOverallPool</artifactId>
+    <artifactId>getTodayPool</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

@@ -1,4 +1,4 @@
-package com.mtjworldcup.getoverallpool;
+package com.mtjworldcup.gettodaypool;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -28,7 +28,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
-            Match overallPoolRecord = matchesDao.getOverallPool();
+            Match overallPoolRecord = matchesDao.getTodayPool();
             BigDecimal overallPool = overallPoolRecord.getPool();
             return new APIGatewayProxyResponseEvent()
                     .withBody(String.valueOf(overallPool))

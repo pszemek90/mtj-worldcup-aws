@@ -1,4 +1,4 @@
-package com.mtjworldcup.getoverallpool;
+package com.mtjworldcup.gettodaypool;
 
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
@@ -19,7 +19,7 @@ class HandlerTest {
     void shouldReturn100_WhenOverallPoolIs100() {
         // Given
         Handler handler = new Handler(mockMatchesDao);
-        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(new BigDecimal(100)));
+        when(mockMatchesDao.getTodayPool()).thenReturn(prepareOverallPool(new BigDecimal(100)));
         // When
         var response = handler.handleRequest(null, null);
         // Then
@@ -32,7 +32,7 @@ class HandlerTest {
     void shouldReturn200_WhenOverallPoolIs200() {
         // Given
         Handler handler = new Handler(mockMatchesDao);
-        when(mockMatchesDao.getOverallPool()).thenReturn(prepareOverallPool(new BigDecimal(200)));
+        when(mockMatchesDao.getTodayPool()).thenReturn(prepareOverallPool(new BigDecimal(200)));
         // When
         var response = handler.handleRequest(null, null);
         // Then
@@ -45,7 +45,7 @@ class HandlerTest {
     void shouldReturn404_WhenOverallPoolIsNotAvailable() {
         // Given
         Handler handler = new Handler(mockMatchesDao);
-        when(mockMatchesDao.getOverallPool()).thenThrow(new RuntimeException("Error"));
+        when(mockMatchesDao.getTodayPool()).thenThrow(new RuntimeException("Error"));
         // When
         var response = handler.handleRequest(null, null);
         // Then
