@@ -97,6 +97,14 @@ public class InfrastructureStack extends Stack {
             worldcupCommonLayer,
             cognitoLayer);
 
+    Function updateUserToken = Lambda.createLambda(
+            this,
+            "updateUserToken",
+            "updateusertoken",
+            dynamoDbLayer,
+            worldcupCommonLayer,
+            cognitoLayer);
+
     TableV2 matchesTable = DynamoDb.createTable(this);
 
     matchesTable.grantReadWriteData(getMatchesFromApi);
@@ -113,6 +121,7 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantStreamRead(handleFinishedMatch);
     matchesTable.grantReadData(getTypersRank);
     matchesTable.grantReadData(getUserHistory);
+    matchesTable.grantReadWriteData(updateUserToken);
 
     String userPoolId = "USER_POOL_ID";
     String userPoolIdFromSsm = StringParameter.valueForStringParameter(this, userPoolId);
@@ -124,6 +133,7 @@ public class InfrastructureStack extends Stack {
     worldcupUserPool.grant(getMyTypings, adminGetUser);
     worldcupUserPool.grant(getUserProfile, adminGetUser);
     worldcupUserPool.grant(getUserHistory, adminGetUser);
+    worldcupUserPool.grant(updateUserToken, adminGetUser);
 
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
@@ -174,6 +184,10 @@ public class InfrastructureStack extends Stack {
     getUserHistory.addEnvironment(matchesTableName, matchesTable.getTableName());
     getUserHistory.addEnvironment(jwksUrl, jwksUrlFromSsm);
     getUserHistory.addEnvironment(userPoolId, userPoolIdFromSsm);
+
+    updateUserToken.addEnvironment(userPoolId, userPoolIdFromSsm);
+    updateUserToken.addEnvironment(jwksUrl, jwksUrlFromSsm);
+    updateUserToken.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     handleFinishedMatch.addEventSource(
         DynamoEventSource.Builder.create(matchesTable)
@@ -229,6 +243,10 @@ public class InfrastructureStack extends Stack {
         .getParentResource()
         .addResource("user-history")
         .addMethod("GET", LambdaIntegration.Builder.create(getUserHistory).build())
+        .getResource()
+        .getParentResource()
+        .addResource("update-token")
+        .addMethod("POST", LambdaIntegration.Builder.create(updateUserToken).build())
         .getResource()
         .getParentResource()
         .addResource("matches")
