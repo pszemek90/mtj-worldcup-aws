@@ -25,6 +25,7 @@
         <module>dividePool</module>
         <module>handleFinishedMatch</module>
         <module>getUserHistory</module>
+        <module>updateUserToken</module>
     </modules>
 
     <properties>
