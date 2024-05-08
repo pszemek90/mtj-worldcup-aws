@@ -6,6 +6,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Objects;
 
 @DynamoDbBean
 public class Match {
@@ -22,6 +23,8 @@ public class Match {
     private MatchStatus matchStatus;
     private RecordType recordType;
     private BigDecimal pool;
+    private String fcmToken;
+    private String endpointArn;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -137,12 +140,31 @@ public class Match {
         this.recordType = recordType;
     }
 
+    @DynamoDbAttribute("pool")
     public BigDecimal getPool() {
         return pool;
     }
 
     public void setPool(BigDecimal pool) {
         this.pool = pool;
+    }
+
+    @DynamoDbAttribute("fcm_token")
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    @DynamoDbAttribute("endpoint_arn")
+    public String getEndpointArn() {
+        return endpointArn;
+    }
+
+    public void setEndpointArn(String endpointArn) {
+        this.endpointArn = endpointArn;
     }
 
     @Override
@@ -161,6 +183,20 @@ public class Match {
                 ", matchStatus=" + matchStatus +
                 ", recordType=" + recordType +
                 ", pool=" + pool +
+                ", fcmToken='" + fcmToken + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Match match = (Match) o;
+        return correctTypings == match.correctTypings && Objects.equals(primaryId, match.primaryId) && Objects.equals(secondaryId, match.secondaryId) && Objects.equals(date, match.date) && Objects.equals(startTime, match.startTime) && Objects.equals(homeTeam, match.homeTeam) && Objects.equals(awayTeam, match.awayTeam) && Objects.equals(homeScore, match.homeScore) && Objects.equals(awayScore, match.awayScore) && typingStatus == match.typingStatus && matchStatus == match.matchStatus && recordType == match.recordType && Objects.equals(pool, match.pool) && Objects.equals(fcmToken, match.fcmToken) && Objects.equals(endpointArn, match.endpointArn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(primaryId, secondaryId, date, startTime, homeTeam, awayTeam, homeScore, awayScore, correctTypings, typingStatus, matchStatus, recordType, pool, fcmToken, endpointArn);
     }
 }
