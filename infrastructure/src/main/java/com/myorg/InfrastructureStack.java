@@ -178,6 +178,8 @@ public class InfrastructureStack extends Stack {
     dividePool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     handleFinishedMatch.addEnvironment(matchesTableName, matchesTable.getTableName());
+    String platformApplicationArnFromSsm = StringParameter.valueForStringParameter(this, "SNS_PLATFORM_APPLICATION_ARN");
+    handleFinishedMatch.addEnvironment("SNS_PLATFORM_APPLICATION_ARN", platformApplicationArnFromSsm);
 
     getTypersRank.addEnvironment(matchesTableName, matchesTable.getTableName());
 
