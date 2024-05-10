@@ -97,10 +97,20 @@ public class InfrastructureStack extends Stack {
             worldcupCommonLayer,
             cognitoLayer);
 
-    Function updateUserToken = Lambda.createLambda(
+    Function updateUserToken =
+        Lambda.createLambda(
             this,
             "updateUserToken",
             "updateusertoken",
+            dynamoDbLayer,
+            worldcupCommonLayer,
+            cognitoLayer);
+
+    Function deleteRegistrationToken =
+        Lambda.createLambda(
+            this,
+            "deleteRegistrationToken",
+            "deleteRegistrationToken",
             dynamoDbLayer,
             worldcupCommonLayer,
             cognitoLayer);
@@ -122,6 +132,7 @@ public class InfrastructureStack extends Stack {
     matchesTable.grantReadData(getTypersRank);
     matchesTable.grantReadData(getUserHistory);
     matchesTable.grantReadWriteData(updateUserToken);
+    matchesTable.grantReadWriteData(deleteRegistrationToken);
 
     String userPoolId = "USER_POOL_ID";
     String userPoolIdFromSsm = StringParameter.valueForStringParameter(this, userPoolId);
@@ -178,8 +189,10 @@ public class InfrastructureStack extends Stack {
     dividePool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     handleFinishedMatch.addEnvironment(matchesTableName, matchesTable.getTableName());
-    String platformApplicationArnFromSsm = StringParameter.valueForStringParameter(this, "SNS_PLATFORM_APPLICATION_ARN");
-    handleFinishedMatch.addEnvironment("SNS_PLATFORM_APPLICATION_ARN", platformApplicationArnFromSsm);
+    String platformApplicationArnFromSsm =
+        StringParameter.valueForStringParameter(this, "SNS_PLATFORM_APPLICATION_ARN");
+    handleFinishedMatch.addEnvironment(
+        "SNS_PLATFORM_APPLICATION_ARN", platformApplicationArnFromSsm);
 
     getTypersRank.addEnvironment(matchesTableName, matchesTable.getTableName());
 
@@ -190,6 +203,10 @@ public class InfrastructureStack extends Stack {
     updateUserToken.addEnvironment(userPoolId, userPoolIdFromSsm);
     updateUserToken.addEnvironment(jwksUrl, jwksUrlFromSsm);
     updateUserToken.addEnvironment(matchesTableName, matchesTable.getTableName());
+
+    deleteRegistrationToken.addEnvironment(userPoolId, userPoolIdFromSsm);
+    deleteRegistrationToken.addEnvironment(jwksUrl, jwksUrlFromSsm);
+    deleteRegistrationToken.addEnvironment(matchesTableName, matchesTable.getTableName());
 
     handleFinishedMatch.addEventSource(
         DynamoEventSource.Builder.create(matchesTable)
@@ -249,6 +266,10 @@ public class InfrastructureStack extends Stack {
         .getParentResource()
         .addResource("update-token")
         .addMethod("POST", LambdaIntegration.Builder.create(updateUserToken).build())
+        .getResource()
+        .getParentResource()
+        .addResource("delete-token")
+        .addMethod("GET", LambdaIntegration.Builder.create(deleteRegistrationToken).build())
         .getResource()
         .getParentResource()
         .addResource("matches")
