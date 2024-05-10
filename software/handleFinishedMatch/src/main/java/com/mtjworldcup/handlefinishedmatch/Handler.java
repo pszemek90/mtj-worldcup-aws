@@ -5,24 +5,23 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.StreamRecord;
-import com.mtjworldcup.dynamo.dao.MatchesDao;
+import com.mtjworldcup.handlefinishedmatch.service.FinishedMatchService;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class Handler implements RequestHandler<DynamodbEvent, Void> {
 
   private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
-  private final MatchesDao matchesDao;
+  private final FinishedMatchService finishedMatchService;
 
   public Handler() {
-    this.matchesDao = new MatchesDao();
+    this.finishedMatchService = new FinishedMatchService();
   }
 
-  public Handler(MatchesDao matchesDao) {
-    this.matchesDao = matchesDao;
+  public Handler(FinishedMatchService finishedMatchService) {
+      this.finishedMatchService = finishedMatchService;
   }
 
   @Override
@@ -40,8 +39,8 @@ public class Handler implements RequestHandler<DynamodbEvent, Void> {
                   .map(AttributeValue::getS)
                   .ifPresent(
                       primaryId -> {
-                        log.info("Updating DB entries for match: {}", primaryId);
-                        matchesDao.handleFinishedMatch(primaryId);
+                        log.info("Handling finished match: {}", primaryId);
+                        finishedMatchService.handleFinishedMatch(primaryId);
                       });
             });
     return null;
