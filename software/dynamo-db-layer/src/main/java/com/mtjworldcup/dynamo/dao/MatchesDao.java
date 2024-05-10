@@ -1,9 +1,17 @@
 package com.mtjworldcup.dynamo.dao;
 
-import com.mtjworldcup.common.model.TypingStatus;
+import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
+
 import com.mtjworldcup.dynamo.model.Match;
 import com.mtjworldcup.dynamo.model.MatchStatus;
 import com.mtjworldcup.dynamo.model.RecordType;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -12,18 +20,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URI;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
-import static software.amazon.awssdk.regions.Region.EU_CENTRAL_1;
 
 public class MatchesDao {
 
@@ -236,74 +232,13 @@ public class MatchesDao {
     }
   }
 
-  public void handleFinishedMatch(String primaryId) {
+  public void transactWriteItems(
+          List<TransactUpdateItemEnhancedRequest<Match>> updateRequests,
+          List<TransactPutItemEnhancedRequest<Match>> putRequests) {
     DynamoDbTable<Match> matchTable = getMatchTable();
     var transctionBuilder = TransactWriteItemsEnhancedRequest.builder();
-    Match finishedMatch = getById(primaryId);
-    BigDecimal pool = finishedMatch.getPool();
-    List<Match> typings = getTypingsByMatchId(primaryId);
-    typings.forEach(typing -> typing.setTypingStatus(TypingStatus.INCORRECT));
-    List<Match> correctTypings =
-        typings.stream()
-            .filter(
-                typing ->
-                    typing.getHomeScore().equals(finishedMatch.getHomeScore())
-                        && typing.getAwayScore().equals(finishedMatch.getAwayScore()))
-            .toList();
-    if (correctTypings.isEmpty()) {
-      Match tomorrowPool =
-          getPool(LocalDate.now().plusDays(1))
-              .orElseThrow(() -> new NoSuchElementException("Tomorrow pool not found!"));
-      tomorrowPool.setPool(tomorrowPool.getPool().add(pool));
-      var updateTomorrowPool =
-          TransactUpdateItemEnhancedRequest.builder(Match.class).item(tomorrowPool).build();
-      transctionBuilder.addUpdateItem(matchTable, updateTomorrowPool);
-    } else {
-      correctTypings.forEach(typing -> typing.setTypingStatus(TypingStatus.CORRECT));
-      finishedMatch.setCorrectTypings(correctTypings.size());
-      List<Match> users =
-          correctTypings.stream().map(typing -> getById(typing.getSecondaryId())).toList();
-      BigDecimal poolPerUser = pool.divide(BigDecimal.valueOf(users.size()), 2, RoundingMode.DOWN);
-      users.forEach(user -> user.setCorrectTypings(user.getCorrectTypings() + 1));
-      users.forEach(user -> user.setPool(user.getPool().add(poolPerUser)));
-      List<Match> winMessages = new ArrayList<>();
-      users.forEach(
-          user -> {
-            Match message = new Match();
-            message.setPrimaryId(user.getPrimaryId());
-            message.setSecondaryId("message-" + finishedMatch.getPrimaryId());
-            message.setRecordType(RecordType.MESSAGE);
-            message.setDate(LocalDate.now());
-            message.setPool(poolPerUser);
-            message.setHomeTeam(finishedMatch.getHomeTeam());
-            message.setAwayTeam(finishedMatch.getAwayTeam());
-            winMessages.add(message);
-          });
-      var putMessagesRequests =
-          winMessages.stream()
-              .map(
-                  message ->
-                      TransactPutItemEnhancedRequest.builder(Match.class).item(message).build())
-              .toList();
-      putMessagesRequests.forEach(message -> transctionBuilder.addPutItem(matchTable, message));
-      var userUpdateRequests =
-          users.stream()
-              .map(
-                  user -> TransactUpdateItemEnhancedRequest.builder(Match.class).item(user).build())
-              .toList();
-      userUpdateRequests.forEach(user -> transctionBuilder.addUpdateItem(matchTable, user));
-    }
-    finishedMatch.setPool(BigDecimal.ZERO);
-    var updateMatch =
-        TransactUpdateItemEnhancedRequest.builder(Match.class).item(finishedMatch).build();
-    var typingsUpdateRequests =
-        typings.stream()
-            .map(
-                typing ->
-                    TransactUpdateItemEnhancedRequest.builder(Match.class).item(typing).build())
-            .toList();
-    transctionBuilder.addUpdateItem(matchTable, updateMatch);
-    typingsUpdateRequests.forEach(typing -> transctionBuilder.addUpdateItem(matchTable, typing));
+    updateRequests.forEach(update -> transctionBuilder.addUpdateItem(matchTable, update));
+    putRequests.forEach(put -> transctionBuilder.addPutItem(matchTable, put));
     enhancedClient.transactWriteItems(transctionBuilder.build());
   }
 
