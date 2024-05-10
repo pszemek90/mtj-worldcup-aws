@@ -26,6 +26,7 @@
         <module>handleFinishedMatch</module>
         <module>getUserHistory</module>
         <module>updateUserToken</module>
+        <module>deleteRegistrationToken</module>
     </modules>
 
     <properties>
