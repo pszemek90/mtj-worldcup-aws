@@ -110,7 +110,7 @@ public class InfrastructureStack extends Stack {
         Lambda.createLambda(
             this,
             "deleteRegistrationToken",
-            "deleteRegistrationToken",
+            "deleteregistrationtoken",
             dynamoDbLayer,
             worldcupCommonLayer,
             cognitoLayer);
