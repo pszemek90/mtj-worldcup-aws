@@ -14,8 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -34,9 +36,13 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
-        Map<LocalDate, List<MatchDto>> finishedMatchesGroupedByDate = matchesDao.getFinishedMatches()
-                .stream()
-                .collect(Collectors.groupingBy(Match::getDate, Collectors.mapping(MatchMapper::mapToDto, Collectors.toList())));
+    Map<LocalDate, List<MatchDto>> finishedMatchesGroupedByDate =
+        matchesDao.getFinishedMatches().stream()
+            .collect(
+                Collectors.groupingBy(
+                    Match::getDate,
+                    () -> new TreeMap<>(Comparator.reverseOrder()),
+                    Collectors.mapping(MatchMapper::mapToDto, Collectors.toList())));
         log.debug("Finished matches returned: {}", finishedMatchesGroupedByDate);
         try{
             ObjectMapper objectMapper = new ObjectMapper();
