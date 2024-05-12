@@ -2,6 +2,7 @@ package com.mtjworldcup.handlefinishedmatch.service;
 
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.handlefinishedmatch.exception.UnsubscribedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sns.SnsClient;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.sns.model.InvalidParameterException;
 import software.amazon.awssdk.services.sns.model.NotFoundException;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.SetEndpointAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SubscribeRequest;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -43,11 +45,31 @@ public class SnsService {
         user -> {
           try {
             String endpointArn = retrieveEndpointArn(user);
+            subscribeToTopic(endpointArn);
             publishMessage(endpointArn, finishedMatch, poolPerUser);
+          } catch (UnsubscribedException e) {
+            log.info("User {} is unsubscribed. Hence not sending message.", user.getPrimaryId());
           } catch (Exception e) {
             log.error("Failed to send message to user: {}", user.getPrimaryId(), e);
           }
         });
+  }
+
+  private void subscribeToTopic(String endpointArn) {
+    try {
+      log.info("Subscribing endpoint arn {} to topic", endpointArn);
+      SubscribeRequest request =
+          SubscribeRequest.builder()
+              .protocol("application")
+              .endpoint(endpointArn)
+              .topicArn(System.getenv("SNS_TOPIC_ARN"))
+              .build();
+      snsClient.subscribe(request);
+      log.info("Endpoint arn {} subscribed to topic", endpointArn);
+    } catch (Exception e) {
+      log.warn(
+          "Subscribing endpoint arn {} to topic failed. Cause: {}", endpointArn, e.getMessage());
+    }
   }
 
   private void publishMessage(String endpointArn, Match finishedMatch, BigDecimal poolPerUser) {
@@ -73,17 +95,22 @@ public class SnsService {
   }
 
   private String retrieveEndpointArn(Match user) {
+    log.info("Retrieving endpointArn for user {}", user.getPrimaryId());
     String token = user.getFcmToken();
+    log.info("User {} has FCM token: {}", user.getPrimaryId(), token);
     if (token == null) {
       log.warn("User {} does not have FCM token set", user.getPrimaryId());
-      return null;
+      throw new UnsubscribedException("User does not have FCM token set");
     }
+    log.info("Getting endpoint arn for user {}", user.getPrimaryId());
     String endpointArn = user.getEndpointArn();
+    log.info("User {} has endpointArn: {}", user.getPrimaryId(), endpointArn);
 
     boolean updateNeeded = false;
     boolean createNeeded = (null == endpointArn);
 
     if (createNeeded) {
+      log.info("Create endpoint needed for user {}: {}", user.getPrimaryId(), createNeeded);
       endpointArn = createEndpoint(token, user);
       createNeeded = false;
     }
@@ -91,16 +118,19 @@ public class SnsService {
     try {
       GetEndpointAttributesRequest getAttribuesRequest =
           GetEndpointAttributesRequest.builder().endpointArn(endpointArn).build();
+      log.info("Getting endpoint attributes for user {}", user.getPrimaryId());
       GetEndpointAttributesResponse endpointAttributes =
           snsClient.getEndpointAttributes(getAttribuesRequest);
       updateNeeded =
           !endpointAttributes.attributes().get("Token").equals(token)
               || !endpointAttributes.attributes().get("Enabled").equalsIgnoreCase("true");
+      log.info("Endpoint update needed for user {}: {}", user.getPrimaryId(), updateNeeded);
     } catch (NotFoundException e) {
       createNeeded = true;
     }
 
     if (createNeeded) {
+      log.info("Second create endpoint needed for user {}: {}", user.getPrimaryId(), createNeeded);
       endpointArn = createEndpoint(token, user);
     }
 
@@ -113,23 +143,28 @@ public class SnsService {
               .endpointArn(endpointArn)
               .attributes(attributes)
               .build();
+      log.info("Update needed. Setting endpoint attributes for user {}", user.getPrimaryId());
       snsClient.setEndpointAttributes(setAttributesRequest);
     }
     return endpointArn;
   }
 
   private String createEndpoint(String token, Match user) {
+    log.info("Creating endpoint for user {} and token {}", user.getPrimaryId(), token);
     String endpointArn;
     try {
       CreatePlatformEndpointRequest platformEndpointRequest =
           CreatePlatformEndpointRequest.builder()
               .token(token)
               .platformApplicationArn(System.getenv("SNS_PLATFORM_APPLICATION_ARN"))
+              .customUserData(user.getPrimaryId())
               .build();
+      log.info("Creating platform endpoint for user {}", user.getPrimaryId());
       CreatePlatformEndpointResponse platformEndpointResponse =
           snsClient.createPlatformEndpoint(platformEndpointRequest);
       endpointArn = platformEndpointResponse.endpointArn();
     } catch (InvalidParameterException e) {
+      log.info("InvalidParameterException with cause: {}", e.getMessage());
       String message = e.getMessage();
       Pattern pattern =
           Pattern.compile(".*Endpoint (arn:aws:sns[^ ]+) already exists with the same Token.*");
@@ -146,6 +181,7 @@ public class SnsService {
   }
 
   private void storeEndpointArn(String endpointArn, Match user) {
+    log.info("Storing endpointArn {} for user {}", endpointArn, user.getPrimaryId());
     user.setEndpointArn(endpointArn);
     matchesDao.update(user);
   }
