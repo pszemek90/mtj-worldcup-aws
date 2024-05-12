@@ -79,7 +79,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             return new APIGatewayProxyResponseEvent().withStatusCode(404);
         }
         return new APIGatewayProxyResponseEvent()
-                .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                 .withStatusCode(201);
     }
 

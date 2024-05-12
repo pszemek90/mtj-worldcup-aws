@@ -38,7 +38,6 @@ public class Handler
       user.setFcmToken(null);
       matchesDao.update(user);
       return new APIGatewayProxyResponseEvent()
-          .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
           .withStatusCode(200);
     } catch (SignatureVerifierException e) {
       return new APIGatewayProxyResponseEvent().withStatusCode(401);

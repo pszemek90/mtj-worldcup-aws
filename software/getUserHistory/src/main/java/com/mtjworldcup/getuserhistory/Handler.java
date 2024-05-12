@@ -54,7 +54,6 @@ public class Handler
       List<MessageDto> userMessages = MessageMapper.mapToDto(matchesDao.getMessagesByUserId(userId));
       String responseBody = objectMapper.writeValueAsString(userMessages);
       return new APIGatewayProxyResponseEvent()
-          .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
           .withBody(responseBody)
           .withStatusCode(200);
     } catch (JsonProcessingException e) {

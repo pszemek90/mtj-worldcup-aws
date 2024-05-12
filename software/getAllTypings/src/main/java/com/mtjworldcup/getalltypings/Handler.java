@@ -34,8 +34,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             String stringBody = objectMapper.writeValueAsString(allTypings);
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(200)
-                    .withBody(stringBody)
-                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"));
+                    .withBody(stringBody);
         } catch (JsonProcessingException e) {
             log.error("Error occurred while creating a body string. Exception: {}", e.getMessage());
             return new APIGatewayProxyResponseEvent()

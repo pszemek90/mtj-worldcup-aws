@@ -32,7 +32,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             BigDecimal overallPool = overallPoolRecord.getPool();
             return new APIGatewayProxyResponseEvent()
                     .withBody(String.valueOf(overallPool))
-                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                     .withStatusCode(200);
         } catch (Exception e) {
             log.error("Error getting overall pool. Cause: {}", e.getMessage());

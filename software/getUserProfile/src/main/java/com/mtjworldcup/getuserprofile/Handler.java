@@ -45,7 +45,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .orElseThrow(() -> new NoSuchElementException("User pool not found for user id: " + userId));
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(200)
-                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                     .withBody(userBalance.toString());
         } catch (SignatureVerifierException e) {
             log.error("Error while verifying user token: {}", e.getMessage());

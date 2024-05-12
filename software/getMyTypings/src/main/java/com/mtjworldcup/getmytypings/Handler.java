@@ -50,7 +50,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             String body = objectMapper.writeValueAsString(typings);
             return new APIGatewayProxyResponseEvent()
                     .withBody(body)
-                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                     .withStatusCode(200);
         } catch (JsonProcessingException e) {
             log.error("Exception while writing typings to JSON. Cause: {}", e.getMessage());
