@@ -15,6 +15,7 @@ import com.mtjworldcup.updateusertoken.model.FCMToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -52,6 +53,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             user.setFcmToken(fcmToken.token());
             matchesDao.update(user);
             return new APIGatewayProxyResponseEvent()
+                    .withHeaders(Map.of("Access-Control-Allow-Origin", "http://localhost:5173"))
                     .withStatusCode(204);
         } catch (SignatureVerifierException e) {
             log.warn("Signature verification failed. Cause: {}", e.getMessage());
