@@ -12,6 +12,7 @@ import software.amazon.awscdk.services.cognito.UserPool;
 import software.amazon.awscdk.services.dynamodb.TableV2;
 import software.amazon.awscdk.services.events.CronOptions;
 import software.amazon.awscdk.services.events.Schedule;
+import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.lambda.FilterCriteria;
 import software.amazon.awscdk.services.lambda.FilterRule;
 import software.amazon.awscdk.services.lambda.Function;
@@ -150,20 +151,40 @@ public class InfrastructureStack extends Stack {
     worldcupUserPool.grant(updateUserToken, adminGetUser);
     worldcupUserPool.grant(deleteRegistrationToken, adminGetUser);
 
+    String snsPlatformApplicationArn = "SNS_PLATFORM_APPLICATION_ARN";
+    String snsTopicArn = "SNS_TOPIC_ARN";
+    String platformApplicationArnFromSsm =
+            StringParameter.valueForStringParameter(this, snsPlatformApplicationArn);
+    String snsTopicArnFromSsm = StringParameter.valueForStringParameter(this, snsTopicArn);
+
+    PolicyStatement createDeletePlatformEndpoint = new PolicyStatement();
+    createDeletePlatformEndpoint.addActions("sns:CreatePlatformEndpoint", "sns:DeleteEndpoint");
+    createDeletePlatformEndpoint.addResources(platformApplicationArnFromSsm);
+
+    PolicyStatement addRemoveSubscription = new PolicyStatement();
+    addRemoveSubscription.addActions("sns:Subscribe", "sns:Unsubscribe");
+    addRemoveSubscription.addResources(snsTopicArnFromSsm);
+
+    PolicyStatement getSetEndpointAttributes = new PolicyStatement();
+    getSetEndpointAttributes.addActions("sns:GetEndpointAttributes", "sns:SetEndpointAttributes");
+    getSetEndpointAttributes.addResources(platformApplicationArnFromSsm);
+
+    deleteRegistrationToken.addToRolePolicy(createDeletePlatformEndpoint);
+    deleteRegistrationToken.addToRolePolicy(addRemoveSubscription);
+    deleteRegistrationToken.addToRolePolicy(getSetEndpointAttributes);
+    updateUserToken.addToRolePolicy(createDeletePlatformEndpoint);
+    updateUserToken.addToRolePolicy(addRemoveSubscription);
+    updateUserToken.addToRolePolicy(getSetEndpointAttributes);
+
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
     String rapidApiKey = "RAPID_API_KEY";
     String rapidApiHost = "RAPID_API_HOST";
     String baseUrl = "BASE_API_URL";
-    String snsPlatformApplicationArn = "SNS_PLATFORM_APPLICATION_ARN";
-    String snsTopicArn = "SNS_TOPIC_ARN";
     String rapidApiKeyFromSsm = StringParameter.valueForStringParameter(this, rapidApiKey);
     String rapiApiHostFromSsm = StringParameter.valueForStringParameter(this, rapidApiHost);
     String jwksUrlFromSsm = StringParameter.valueForStringParameter(this, jwksUrl);
     String baseMatchApiUrlFromSsm = StringParameter.valueForStringParameter(this, baseUrl);
-    String platformApplicationArnFromSsm =
-            StringParameter.valueForStringParameter(this, snsPlatformApplicationArn);
-    String snsTopicArnFromSsm = StringParameter.valueForStringParameter(this, snsTopicArn);
 
     getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
     getMatchesFromApi.addEnvironment(rapidApiKey, rapidApiKeyFromSsm);
