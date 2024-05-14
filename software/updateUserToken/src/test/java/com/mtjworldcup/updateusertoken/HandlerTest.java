@@ -15,6 +15,7 @@ import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.sns.SnsService;
 import com.mtjworldcup.updateusertoken.model.FCMToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +25,14 @@ class HandlerTest {
   private final CognitoJwtVerifierService mockCognitoJwtVerifierService =
       mock(CognitoJwtVerifierService.class);
   private final MatchesDao mockMatchesDao = mock(MatchesDao.class);
+  private final SnsService snsService = mock(SnsService.class);
   private final ObjectMapper spyObjectMapper = spy(ObjectMapper.class);
 
   private Handler handler;
 
   @BeforeEach
   void setUp() {
-    handler = new Handler(mockCognitoJwtVerifierService, mockMatchesDao, spyObjectMapper);
+    handler = new Handler(mockCognitoJwtVerifierService, mockMatchesDao, spyObjectMapper, snsService);
   }
 
   @Test

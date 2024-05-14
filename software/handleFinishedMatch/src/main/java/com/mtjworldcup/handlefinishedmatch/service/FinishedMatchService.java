@@ -16,16 +16,16 @@ import java.util.NoSuchElementException;
 
 public class FinishedMatchService {
   private final MatchesDao matchesDao;
-  private final SnsService snsService;
+  private final MessageService messageService;
 
   public FinishedMatchService() {
     this.matchesDao = new MatchesDao();
-    this.snsService = new SnsService();
+    this.messageService = new MessageService();
   }
 
-  public FinishedMatchService(MatchesDao matchesDao, SnsService snsService) {
+  public FinishedMatchService(MatchesDao matchesDao, MessageService messageService) {
     this.matchesDao = matchesDao;
-    this.snsService = snsService;
+    this.messageService = messageService;
   }
 
   public void handleFinishedMatch(String primaryId) {
@@ -81,7 +81,7 @@ public class FinishedMatchService {
                   user -> TransactUpdateItemEnhancedRequest.builder(Match.class).item(user).build())
               .toList();
       updateItemRequests.addAll(userUpdateRequests);
-      snsService.sendMessages(users, finishedMatch, poolPerUser);
+      messageService.sendMessages(users, finishedMatch, poolPerUser);
     }
     finishedMatch.setPool(BigDecimal.ZERO);
     var updateMatch =

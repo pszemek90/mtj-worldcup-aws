@@ -11,11 +11,11 @@ import com.mtjworldcup.cognito.exception.SignatureVerifierException;
 import com.mtjworldcup.cognito.service.CognitoJwtVerifierService;
 import com.mtjworldcup.dynamo.dao.MatchesDao;
 import com.mtjworldcup.dynamo.model.Match;
+import com.mtjworldcup.sns.SnsService;
 import com.mtjworldcup.updateusertoken.model.FCMToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Optional;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -25,17 +25,20 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private final CognitoJwtVerifierService cognitoJwtVerifierService;
     private final MatchesDao matchesDao;
     private final ObjectMapper objectMapper;
+    private final SnsService snsService;
 
-    public Handler(CognitoJwtVerifierService cognitoJwtVerifierService, MatchesDao matchesDao, ObjectMapper objectMapper) {
+    public Handler(CognitoJwtVerifierService cognitoJwtVerifierService, MatchesDao matchesDao, ObjectMapper objectMapper, SnsService snsService) {
         this.cognitoJwtVerifierService = cognitoJwtVerifierService;
         this.matchesDao = matchesDao;
         this.objectMapper = objectMapper;
+        this.snsService = snsService;
     }
 
     public Handler() {
         this.cognitoJwtVerifierService = new CognitoJwtVerifierService();
         this.matchesDao = new MatchesDao();
         this.objectMapper = new ObjectMapper();
+        this.snsService = new SnsService();
     }
 
     @Override
@@ -50,7 +53,14 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                     .map(APIGatewayProxyRequestEvent::getBody)
                     .orElseThrow(() -> new IllegalArgumentException("Request body cannot be empty!"));
             FCMToken fcmToken = objectMapper.readValue(requestBody, FCMToken.class);
-            user.setFcmToken(fcmToken.token());
+            String token = fcmToken.token();
+            user.setFcmToken(token);
+            if(user.getEndpointArn() == null) {
+                String endpointArn = snsService.retrieveEndpointArn(token, null, userId);
+                user.setEndpointArn(endpointArn);
+                String subscriptionArn = snsService.subscribeToTopic(endpointArn);
+                user.setSubscriptionArn(subscriptionArn);
+            }
             matchesDao.update(user);
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(204);
