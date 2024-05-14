@@ -32,6 +32,7 @@ public class InfrastructureStack extends Stack {
     LayerVersion dynamoDbLayer = Lambda.createLayer(this, "dynamo-db-layer");
     LayerVersion worldcupCommonLayer = Lambda.createLayer(this, "worldcup-common-layer");
     LayerVersion cognitoLayer = Lambda.createLayer(this, "cognito-layer");
+    LayerVersion snsLayer = Lambda.createLayer(this, "sns-layer");
 
     Function getMatchesFromApi =
         Lambda.createLambda(
@@ -82,7 +83,7 @@ public class InfrastructureStack extends Stack {
 
     Function handleFinishedMatch =
         Lambda.createLambda(
-            this, "handleFinishedMatch", "handlefinishedmatch", dynamoDbLayer, worldcupCommonLayer);
+            this, "handleFinishedMatch", "handlefinishedmatch", dynamoDbLayer, worldcupCommonLayer, snsLayer);
 
     Function getTypersRank =
         Lambda.createLambda(
@@ -104,7 +105,8 @@ public class InfrastructureStack extends Stack {
             "updateusertoken",
             dynamoDbLayer,
             worldcupCommonLayer,
-            cognitoLayer);
+            cognitoLayer,
+                snsLayer);
 
     Function deleteRegistrationToken =
         Lambda.createLambda(
@@ -113,7 +115,8 @@ public class InfrastructureStack extends Stack {
             "deleteregistrationtoken",
             dynamoDbLayer,
             worldcupCommonLayer,
-            cognitoLayer);
+            cognitoLayer,
+                snsLayer);
 
     TableV2 matchesTable = DynamoDb.createTable(this);
 
@@ -145,16 +148,22 @@ public class InfrastructureStack extends Stack {
     worldcupUserPool.grant(getUserProfile, adminGetUser);
     worldcupUserPool.grant(getUserHistory, adminGetUser);
     worldcupUserPool.grant(updateUserToken, adminGetUser);
+    worldcupUserPool.grant(deleteRegistrationToken, adminGetUser);
 
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
     String rapidApiKey = "RAPID_API_KEY";
     String rapidApiHost = "RAPID_API_HOST";
     String baseUrl = "BASE_API_URL";
+    String snsPlatformApplicationArn = "SNS_PLATFORM_APPLICATION_ARN";
+    String snsTopicArn = "SNS_TOPIC_ARN";
     String rapidApiKeyFromSsm = StringParameter.valueForStringParameter(this, rapidApiKey);
     String rapiApiHostFromSsm = StringParameter.valueForStringParameter(this, rapidApiHost);
     String jwksUrlFromSsm = StringParameter.valueForStringParameter(this, jwksUrl);
     String baseMatchApiUrlFromSsm = StringParameter.valueForStringParameter(this, baseUrl);
+    String platformApplicationArnFromSsm =
+            StringParameter.valueForStringParameter(this, snsPlatformApplicationArn);
+    String snsTopicArnFromSsm = StringParameter.valueForStringParameter(this, snsTopicArn);
 
     getMatchesFromApi.addEnvironment(matchesTableName, matchesTable.getTableName());
     getMatchesFromApi.addEnvironment(rapidApiKey, rapidApiKeyFromSsm);
@@ -188,13 +197,10 @@ public class InfrastructureStack extends Stack {
 
     dividePool.addEnvironment(matchesTableName, matchesTable.getTableName());
 
-    String platformApplicationArnFromSsm =
-            StringParameter.valueForStringParameter(this, "SNS_PLATFORM_APPLICATION_ARN");
-    String snsTopicArnFromSsm = StringParameter.valueForStringParameter(this, "SNS_TOPIC_ARN");
     handleFinishedMatch.addEnvironment(matchesTableName, matchesTable.getTableName());
     handleFinishedMatch.addEnvironment(
-        "SNS_PLATFORM_APPLICATION_ARN", platformApplicationArnFromSsm);
-    handleFinishedMatch.addEnvironment("SNS_TOPIC_ARN", snsTopicArnFromSsm);
+            snsPlatformApplicationArn, platformApplicationArnFromSsm);
+    handleFinishedMatch.addEnvironment(snsTopicArn, snsTopicArnFromSsm);
 
     getTypersRank.addEnvironment(matchesTableName, matchesTable.getTableName());
 
@@ -205,10 +211,14 @@ public class InfrastructureStack extends Stack {
     updateUserToken.addEnvironment(userPoolId, userPoolIdFromSsm);
     updateUserToken.addEnvironment(jwksUrl, jwksUrlFromSsm);
     updateUserToken.addEnvironment(matchesTableName, matchesTable.getTableName());
+    updateUserToken.addEnvironment(snsPlatformApplicationArn, platformApplicationArnFromSsm);
+    updateUserToken.addEnvironment(snsTopicArn, snsTopicArnFromSsm);
 
     deleteRegistrationToken.addEnvironment(userPoolId, userPoolIdFromSsm);
     deleteRegistrationToken.addEnvironment(jwksUrl, jwksUrlFromSsm);
     deleteRegistrationToken.addEnvironment(matchesTableName, matchesTable.getTableName());
+    deleteRegistrationToken.addEnvironment(snsPlatformApplicationArn, platformApplicationArnFromSsm);
+    deleteRegistrationToken.addEnvironment(snsTopicArn, snsTopicArnFromSsm);
 
     handleFinishedMatch.addEventSource(
         DynamoEventSource.Builder.create(matchesTable)
