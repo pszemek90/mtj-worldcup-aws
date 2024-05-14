@@ -25,6 +25,7 @@ public class Match {
     private BigDecimal pool;
     private String fcmToken;
     private String endpointArn;
+    private String subscriptionArn;
 
     @DynamoDbSecondarySortKey(indexNames = {"getBySecondaryId"})
     @DynamoDbPartitionKey
@@ -167,6 +168,15 @@ public class Match {
         this.endpointArn = endpointArn;
     }
 
+    @DynamoDbAttribute("subscription_arn")
+    public String getSubscriptionArn() {
+        return subscriptionArn;
+    }
+
+    public void setSubscriptionArn(String subscriptionArn) {
+        this.subscriptionArn = subscriptionArn;
+    }
+
     @Override
     public String toString() {
         return "Match{" +
@@ -184,6 +194,8 @@ public class Match {
                 ", recordType=" + recordType +
                 ", pool=" + pool +
                 ", fcmToken='" + fcmToken + '\'' +
+                ", endpointArn='" + endpointArn + '\'' +
+                ", subscriptionArn='" + subscriptionArn + '\'' +
                 '}';
     }
 
@@ -192,11 +204,11 @@ public class Match {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Match match = (Match) o;
-        return correctTypings == match.correctTypings && Objects.equals(primaryId, match.primaryId) && Objects.equals(secondaryId, match.secondaryId) && Objects.equals(date, match.date) && Objects.equals(startTime, match.startTime) && Objects.equals(homeTeam, match.homeTeam) && Objects.equals(awayTeam, match.awayTeam) && Objects.equals(homeScore, match.homeScore) && Objects.equals(awayScore, match.awayScore) && typingStatus == match.typingStatus && matchStatus == match.matchStatus && recordType == match.recordType && Objects.equals(pool, match.pool) && Objects.equals(fcmToken, match.fcmToken) && Objects.equals(endpointArn, match.endpointArn);
+        return correctTypings == match.correctTypings && Objects.equals(primaryId, match.primaryId) && Objects.equals(secondaryId, match.secondaryId) && Objects.equals(date, match.date) && Objects.equals(startTime, match.startTime) && Objects.equals(homeTeam, match.homeTeam) && Objects.equals(awayTeam, match.awayTeam) && Objects.equals(homeScore, match.homeScore) && Objects.equals(awayScore, match.awayScore) && typingStatus == match.typingStatus && matchStatus == match.matchStatus && recordType == match.recordType && Objects.equals(pool, match.pool) && Objects.equals(fcmToken, match.fcmToken) && Objects.equals(endpointArn, match.endpointArn) && Objects.equals(subscriptionArn, match.subscriptionArn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(primaryId, secondaryId, date, startTime, homeTeam, awayTeam, homeScore, awayScore, correctTypings, typingStatus, matchStatus, recordType, pool, fcmToken, endpointArn);
+        return Objects.hash(primaryId, secondaryId, date, startTime, homeTeam, awayTeam, homeScore, awayScore, correctTypings, typingStatus, matchStatus, recordType, pool, fcmToken, endpointArn, subscriptionArn);
     }
 }
