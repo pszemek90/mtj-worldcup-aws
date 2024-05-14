@@ -27,6 +27,7 @@
         <module>getUserHistory</module>
         <module>updateUserToken</module>
         <module>deleteRegistrationToken</module>
+        <module>sns-layer</module>
     </modules>
 
     <properties>
