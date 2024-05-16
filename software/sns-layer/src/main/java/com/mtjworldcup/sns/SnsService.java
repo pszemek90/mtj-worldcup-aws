@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sns.model.SubscribeResponse;
 public class SnsService {
 
   private static final Logger log = LoggerFactory.getLogger(SnsService.class);
+  public static final String TOKEN = "Token";
 
   private final SnsClient snsClient;
 
@@ -95,7 +96,7 @@ public class SnsService {
       GetEndpointAttributesResponse endpointAttributes =
           snsClient.getEndpointAttributes(getAttribuesRequest);
       updateNeeded =
-          !endpointAttributes.attributes().get("Token").equals(token)
+          !endpointAttributes.attributes().get(TOKEN).equals(token)
               || !endpointAttributes.attributes().get("Enabled").equalsIgnoreCase("true");
       log.info("Endpoint update needed for user {}: {}", username, updateNeeded);
     } catch (NotFoundException e) {
@@ -109,7 +110,7 @@ public class SnsService {
 
     if (updateNeeded) {
       Map<String, String> attributes = new HashMap<>();
-      attributes.put("Token", token);
+      attributes.put(TOKEN, token);
       attributes.put("Enabled", "true");
       SetEndpointAttributesRequest setAttributesRequest =
           SetEndpointAttributesRequest.builder()
@@ -150,6 +151,18 @@ public class SnsService {
       }
     }
     return endpointArn;
+  }
+
+  public void updatePlatformEndpoint(String endpointArn, String token) {
+    Map<String, String> attributes = new HashMap<>();
+    attributes.put(TOKEN, token);
+    SetEndpointAttributesRequest setAttributesRequest =
+        SetEndpointAttributesRequest.builder()
+            .endpointArn(endpointArn)
+            .attributes(attributes)
+            .build();
+    log.info("Setting new token for endpointArn {}", endpointArn);
+    snsClient.setEndpointAttributes(setAttributesRequest);
   }
 
   public void unsubscribeFromTopic(String subscriptionArn) {
