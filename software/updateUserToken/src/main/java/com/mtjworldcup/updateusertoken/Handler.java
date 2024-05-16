@@ -60,6 +60,8 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 user.setEndpointArn(endpointArn);
                 String subscriptionArn = snsService.subscribeToTopic(endpointArn);
                 user.setSubscriptionArn(subscriptionArn);
+            } else {
+                snsService.updatePlatformEndpoint(user.getEndpointArn(), token);
             }
             matchesDao.update(user);
             return new APIGatewayProxyResponseEvent()
