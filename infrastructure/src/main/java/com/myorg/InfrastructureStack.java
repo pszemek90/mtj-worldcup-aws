@@ -153,9 +153,11 @@ public class InfrastructureStack extends Stack {
 
     String snsPlatformApplicationArn = "SNS_PLATFORM_APPLICATION_ARN";
     String snsTopicArn = "SNS_TOPIC_ARN";
+    String leagueId = "LEAGUE_ID";
     String platformApplicationArnFromSsm =
             StringParameter.valueForStringParameter(this, snsPlatformApplicationArn);
     String snsTopicArnFromSsm = StringParameter.valueForStringParameter(this, snsTopicArn);
+    String leagueIdFromSsm = StringParameter.valueForStringParameter(this, leagueId);
 
     PolicyStatement createDeletePlatformEndpoint = new PolicyStatement();
     createDeletePlatformEndpoint.addActions("sns:CreatePlatformEndpoint", "sns:DeleteEndpoint");
@@ -169,12 +171,20 @@ public class InfrastructureStack extends Stack {
     getSetEndpointAttributes.addActions("sns:GetEndpointAttributes", "sns:SetEndpointAttributes");
     getSetEndpointAttributes.addResources(platformApplicationArnFromSsm);
 
+    PolicyStatement publishMessage = new PolicyStatement();
+    publishMessage.addActions("sns:Publish");
+    publishMessage.addResources(platformApplicationArnFromSsm);
+
     deleteRegistrationToken.addToRolePolicy(createDeletePlatformEndpoint);
     deleteRegistrationToken.addToRolePolicy(addRemoveSubscription);
     deleteRegistrationToken.addToRolePolicy(getSetEndpointAttributes);
     updateUserToken.addToRolePolicy(createDeletePlatformEndpoint);
     updateUserToken.addToRolePolicy(addRemoveSubscription);
     updateUserToken.addToRolePolicy(getSetEndpointAttributes);
+    handleFinishedMatch.addToRolePolicy(createDeletePlatformEndpoint);
+    handleFinishedMatch.addToRolePolicy(addRemoveSubscription);
+    handleFinishedMatch.addToRolePolicy(getSetEndpointAttributes);
+    handleFinishedMatch.addToRolePolicy(publishMessage);
 
     String matchesTableName = "MATCHES_TABLE_NAME";
     String jwksUrl = "JWKS_URL";
@@ -190,6 +200,7 @@ public class InfrastructureStack extends Stack {
     getMatchesFromApi.addEnvironment(rapidApiKey, rapidApiKeyFromSsm);
     getMatchesFromApi.addEnvironment(rapidApiHost, rapiApiHostFromSsm);
     getMatchesFromApi.addEnvironment(baseUrl, baseMatchApiUrlFromSsm);
+    getMatchesFromApi.addEnvironment(leagueId, leagueIdFromSsm);
 
     getMatchesByDate.addEnvironment(matchesTableName, matchesTable.getTableName());
 
