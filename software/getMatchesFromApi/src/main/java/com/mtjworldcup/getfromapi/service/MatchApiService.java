@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 public class MatchApiService {
 
     private static final Logger log = LoggerFactory.getLogger(MatchApiService.class);
-    private static final int PREMIER_LEAGUE_ID = 39;
 
     private final OkHttpClient okHttpClient;
     private final ObjectMapper objectMapper;
@@ -39,8 +38,9 @@ public class MatchApiService {
         final String rapidApiKey = System.getenv("RAPID_API_KEY");
         final String rapidApiHost = System.getenv("RAPID_API_HOST");
         final String baseUrl = System.getenv("BASE_API_URL");
+        final int leagueId = Integer.parseInt(System.getenv("LEAGUE_ID"));
         Request currentSeasonRequest = new Request.Builder()
-                .url(String.format("%s/leagues?id=%d&current=true", baseUrl, PREMIER_LEAGUE_ID))
+                .url(String.format("%s/leagues?id=%d&current=true", baseUrl, leagueId))
                 .get()
                 .addHeader("X-RapidAPI-Key", rapidApiKey)
                 .addHeader("X-RapidAPI-Host", rapidApiHost)
@@ -78,7 +78,8 @@ public class MatchApiService {
         String from = now.format(formatter);
         String to = now.plusDays(7).format(formatter);
         Request request = new Request.Builder()
-                .url(String.format("%s/fixtures?league=39&from=%s&to=%s&season=%d", baseUrl, from, to, currentSeason))
+                .url(String.format("%s/fixtures?league=%d&from=%s&to=%s&season=%d",
+                        baseUrl, leagueId, from, to, currentSeason))
                 .get()
                 .addHeader("X-RapidAPI-Key", rapidApiKey)
                 .addHeader("X-RapidAPI-Host", rapidApiHost)

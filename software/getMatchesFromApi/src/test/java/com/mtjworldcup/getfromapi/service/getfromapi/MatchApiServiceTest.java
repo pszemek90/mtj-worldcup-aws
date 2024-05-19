@@ -56,6 +56,7 @@ class MatchApiServiceTest {
         //given
         environmentVariables.set("RAPID_API_KEY", "TEST");
         environmentVariables.set("RAPID_API_HOST", "TEST");
+        environmentVariables.set("LEAGUE_ID", "113");
         environmentVariables.set("BASE_API_URL", baseUrl);
         String currentSeasonResponse = Files.readString(Path.of("src/test/resources/files/successful-get-seasons-response.json"));
         MockResponse mockCurrentSeasonResponse = new MockResponse()
@@ -80,6 +81,7 @@ class MatchApiServiceTest {
         //given
         environmentVariables.set("RAPID_API_KEY", "TEST");
         environmentVariables.set("RAPID_API_HOST", "TEST");
+        environmentVariables.set("LEAGUE_ID", "113");
         environmentVariables.set("BASE_API_URL", baseUrl);
         String currentSeasonResponse = Files.readString(Path.of("src/test/resources/files/failure-get-seasons-response.json"));
         MockResponse mockCurrentSeasonResponse = new MockResponse()
@@ -101,6 +103,7 @@ class MatchApiServiceTest {
     void shouldThrowNoSuchElementException_WhenNoRapidApiKeyVariablePresent() {
         //given
         environmentVariables.set("BASE_API_URL", baseUrl);
+        environmentVariables.set("LEAGUE_ID", "113");
         MatchApiService matchApiService = new MatchApiService(okHttpClient, objectMapper);
         //when, then
         assertThrows(NullPointerException.class, matchApiService::getMatchesFromApi);
