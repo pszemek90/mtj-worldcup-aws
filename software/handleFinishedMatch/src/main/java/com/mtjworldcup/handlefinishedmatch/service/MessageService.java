@@ -47,7 +47,7 @@ public class MessageService {
     return String.format(
             """
             {
-              "GCM": "{ \\"notification\\": { \\"title\\": \\"Wygrana!\\", \\"body\\": \\"Wygrana %.2fzł w meczu %s - %s\\" } }"
+              "GCM": "{ \\"data\\": { \\"title\\": \\"Wygrana!\\", \\"body\\": \\"Wygrana %.2fzł w meczu %s - %s\\" } }"
             }
             """,
             poolPerUser, finishedMatch.getHomeTeam(), finishedMatch.getAwayTeam());
