@@ -10,11 +10,60 @@ import java.math.MathContext;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class MatchMapper {
 
     private MatchMapper() {
         // private constructor to hide implicit public one
+    }
+
+    private static final Map<String, String> countries = Map.ofEntries(
+            Map.entry("Germany", "Niemcy"),
+            Map.entry("Scotland", "Szkocja"),
+            Map.entry("Hungary", "Węgry"),
+            Map.entry("Switzerland", "Szwajcaria"),
+            Map.entry("Spain", "Hiszpania"),
+            Map.entry("Croatia", "Chorwacja"),
+            Map.entry("Italy", "Włochy"),
+            Map.entry("Albania", "Albania"),
+            Map.entry("Slovenia", "Słowenia"),
+            Map.entry("Denmark", "Dania"),
+            Map.entry("Serbia", "Serbia"),
+            Map.entry("England", "Anglia"),
+            Map.entry("Austria", "Austria"),
+            Map.entry("France", "Francja"),
+            Map.entry("Belgium", "Belgia"),
+            Map.entry("Slovakia", "Słowacja"),
+            Map.entry("Portugal", "Portugalia"),
+            Map.entry("Czech Republic", "Czechy"),
+            Map.entry("Romania", "Rumunia"),
+            Map.entry("Turkey", "Turcja"),
+            Map.entry("Netherlands", "Holandia"),
+            Map.entry("Poland", "Polska"),
+            Map.entry("Ukraine", "Ukraina"),
+            Map.entry("Georgia", "Gruzja")
+    );
+
+    public static MatchDto translateCountries(MatchDto dto) {
+        Optional.of(dto)
+                .map(MatchDto::getTeams)
+                .map(MatchDto.Teams::getHome)
+                .map(MatchDto.Teams.Team::getName)
+                .map(countries::get)
+                .ifPresent(dto.getTeams().getHome()::setName);
+        Optional.of(dto)
+                .map(MatchDto::getTeams)
+                .map(MatchDto.Teams::getAway)
+                .map(MatchDto.Teams.Team::getName)
+                .map(countries::get)
+                .ifPresent(dto.getTeams().getAway()::setName);
+        return dto;
+    }
+
+    public static List<MatchDto> translateCountries(List<MatchDto> dtos) {
+        return dtos.stream().map(MatchMapper::translateCountries).toList();
     }
 
     public static Match mapToEntity(MatchDto dto) {

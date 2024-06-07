@@ -32,7 +32,9 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         MatchApiService matchService = new MatchApiService(new OkHttpClient(), new ObjectMapper());
         List<MatchDto> matchesFromApi = matchService.getMatchesFromApi();
         log.info("Matches from api: {}", matchesFromApi);
-        List<Match> entitiesToPersist = MatchMapper.mapToEntity(matchesFromApi);
+        List<MatchDto> translateCountries = MatchMapper.translateCountries(matchesFromApi);
+        log.info("Matches after translation: {}", translateCountries);
+        List<Match> entitiesToPersist = MatchMapper.mapToEntity(translateCountries);
         log.info("Entities for persist: {}", entitiesToPersist);
         matchesDao.saveIfNotExists(entitiesToPersist);
         return new APIGatewayProxyResponseEvent().withStatusCode(200);
