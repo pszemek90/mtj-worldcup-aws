@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class CognitoJwtVerifierService {
 
@@ -56,16 +57,20 @@ public class CognitoJwtVerifierService {
                     .username(subject)
                     .build();
             AdminGetUserResponse adminGetUserResponse = client.adminGetUser(request);
+            Supplier<NoSuchElementException> userDoesNotExist = () -> new NoSuchElementException("User does not exist in user pool");
+            boolean userEnabled = Optional.of(adminGetUserResponse)
+                    .map(AdminGetUserResponse::enabled)
+                    .orElseThrow(userDoesNotExist);
+            if(!userEnabled) {
+                throw new IllegalStateException("User is not enabled in user pool");
+            }
             return Optional.of(adminGetUserResponse)
                     .map(AdminGetUserResponse::userAttributes)
                     .flatMap(attributes -> attributes.stream()
                             .filter(attribute -> attribute.name().equals("preferred_username"))
                             .findFirst()
                             .map(AttributeType::value))
-                    .orElseThrow(() -> new NoSuchElementException("User does not exist in user pool"));
-        } catch (Exception e) {
-            log.warn("User does not exist in user pool. Cause: {}", e.getMessage());
-            throw new NoSuchElementException("User does not exist in user pool");
+                    .orElseThrow(userDoesNotExist);
         }
     }
 
