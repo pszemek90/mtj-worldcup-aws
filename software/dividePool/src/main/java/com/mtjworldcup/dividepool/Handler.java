@@ -65,7 +65,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             }
             BigDecimal poolPerMatch = pool.divide(new BigDecimal(todayMatches.size()), 2, RoundingMode.DOWN);
             todayMatches.forEach(match -> {
-                match.setPool(poolPerMatch);
+                match.setPool(match.getPool().add(poolPerMatch));
                 matchesDao.update(match);
             });
             return new APIGatewayProxyResponseEvent()
