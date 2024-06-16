@@ -23,6 +23,7 @@ public class Match {
     private MatchStatus matchStatus;
     private RecordType recordType;
     private BigDecimal pool;
+    private BigDecimal displayPool;
     private String fcmToken;
     private String endpointArn;
     private String subscriptionArn;
@@ -148,6 +149,15 @@ public class Match {
 
     public void setPool(BigDecimal pool) {
         this.pool = pool;
+    }
+
+    @DynamoDbAttribute("display_pool")
+    public BigDecimal getDisplayPool() {
+        return displayPool;
+    }
+
+    public void setDisplayPool(BigDecimal displayPool) {
+        this.displayPool = displayPool;
     }
 
     @DynamoDbAttribute("fcm_token")
