@@ -95,6 +95,7 @@ public class FinishedMatchService {
       updateItemRequests.addAll(userUpdateRequests);
       messageService.sendMessages(users, finishedMatch, poolPerUser);
     }
+    finishedMatch.setDisplayPool(pool);
     finishedMatch.setPool(BigDecimal.ZERO);
     var updateMatch =
         TransactUpdateItemEnhancedRequest.builder(Match.class).item(finishedMatch).build();
