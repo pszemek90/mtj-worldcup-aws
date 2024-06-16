@@ -10,6 +10,7 @@ import com.mtjworldcup.gettypersrank.model.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +46,13 @@ class HandlerTest {
   @Test
   void shouldReturnTwoUsers_WhenTwoUsersInDb() throws Exception {
     // given
-    when(mockMatchesDao.getUsers()).thenReturn(List.of(new Match(), new Match()));
+    Match user1 = new Match();
+    user1.setCorrectTypings(10);
+    user1.setPool(BigDecimal.ONE);
+    Match user2 = new Match();
+    user2.setCorrectTypings(20);
+    user2.setPool(BigDecimal.TEN);
+    when(mockMatchesDao.getUsers()).thenReturn(List.of(user1, user2));
     // when
     APIGatewayProxyResponseEvent response = handler.handleRequest(null, null);
     // then
