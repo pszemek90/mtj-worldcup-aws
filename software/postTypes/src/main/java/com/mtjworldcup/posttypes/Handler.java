@@ -46,27 +46,30 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         String authorizationHeader = input.getHeaders().get("Authorization");
         String bearerToken = authorizationHeader.substring("Bearer ".length());
         try {
-            String secondaryId = cognitoJwtVerifierService.checkUser(bearerToken);
+            String username = cognitoJwtVerifierService.checkUser(bearerToken);
             String body = input.getBody();
-            log.info("Input body: {}", body);
+            log.info("Input body: {}. User: {}", body, username);
             MatchDto[] matchDtos = objectMapper.readValue(body, MatchDto[].class);
+            log.info("Number of matches sent: {}", matchDtos.length);
             List<Match> filteredEntities = Arrays.stream(matchDtos)
                     .map(match -> matchesDao.getById(match.getMatchId()))
                     .filter(entity -> checkMatchDate(entity.getDate(), entity.getStartTime()))
                     .toList();
+            log.info("Number of matches after filtering: {}", filteredEntities.size());
             List<String> filteredIds = filteredEntities.stream().map(Match::getPrimaryId).toList();
             Map<String, MatchDto> typesToSave = Arrays.stream(matchDtos)
                     .filter(dto -> filteredIds.contains(dto.getMatchId()))
                     .collect(Collectors.toMap(MatchDto::getMatchId, Function.identity()));
             for (Match entity : filteredEntities) {
                 MatchDto matchType = typesToSave.get(entity.getPrimaryId());
-                entity.setSecondaryId(secondaryId);
+                entity.setSecondaryId(username);
                 entity.setHomeScore(matchType.getHomeScore());
                 entity.setAwayScore(matchType.getAwayScore());
                 entity.setRecordType(RecordType.TYPING);
                 entity.setTypingStatus(TypingStatus.UNKNOWN);
             }
             if(!filteredEntities.isEmpty()){
+                log.info("Saving matches for user: {}", username);
                 matchesDao.saveTypings(filteredEntities);
             } else {
                 return new APIGatewayProxyResponseEvent().withStatusCode(204);
