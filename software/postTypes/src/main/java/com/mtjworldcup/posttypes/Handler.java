@@ -59,6 +59,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             List<String> filteredIds = filteredEntities.stream().map(Match::getPrimaryId).toList();
             Map<String, MatchDto> typesToSave = Arrays.stream(matchDtos)
                     .filter(dto -> filteredIds.contains(dto.getMatchId()))
+                    .filter(dto -> dto.getHomeScore() != null && dto.getAwayScore() != null)
                     .collect(Collectors.toMap(MatchDto::getMatchId, Function.identity()));
             for (Match entity : filteredEntities) {
                 MatchDto matchType = typesToSave.get(entity.getPrimaryId());
@@ -79,7 +80,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             return new APIGatewayProxyResponseEvent().withStatusCode(403);
         } catch (Exception e) {
             log.error("Unexpected exception occurred while getting subject from token. Exception: {}", e.getMessage());
-            return new APIGatewayProxyResponseEvent().withStatusCode(404);
+            return new APIGatewayProxyResponseEvent().withStatusCode(500);
         }
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(201);
