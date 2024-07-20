@@ -79,8 +79,8 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 }
                 match.setHomeScore(safeGet(() -> matchFromApi.getGoals().getHome(), null));
                 match.setAwayScore(safeGet(() -> matchFromApi.getGoals().getAway(), null));
-                match.setMatchStatus(MatchStatus.fromShortName(
-                        safeGet(() -> matchFromApi.getFixture().getStatus().getShortName(), "NS")));
+                match.setMatchStatus(MatchStatus.fromLongName(
+                        safeGet(() -> matchFromApi.getFixture().getStatus().getLongName(), "Not Started")));
                 matchesDao.update(match);
             });
             return new APIGatewayProxyResponseEvent()
