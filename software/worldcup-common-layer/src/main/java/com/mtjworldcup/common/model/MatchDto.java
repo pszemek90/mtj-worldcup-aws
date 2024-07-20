@@ -79,12 +79,23 @@ public class MatchDto {
         @JsonProperty("short")
         private String shortName;
 
+        @JsonProperty("long")
+        private String longName;
+
         public void setShortName(String shortName) {
             this.shortName = shortName;
         }
 
         public String getShortName() {
             return shortName;
+        }
+
+        public String getLongName() {
+            return longName;
+        }
+
+        public void setLongName(String longName) {
+            this.longName = longName;
         }
     }
 
